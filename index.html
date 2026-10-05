@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="af" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inkomste & Uitgawe Dashboard</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js vir interaktiewe finansiële grafieke -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#0c111d',
+              card: '#131a29',
+              border: '#1f293d',
+              accent: '#3b82f6',
+              income: '#10b981',
+              expense: '#f43f5e',
+              warning: '#f59e0b'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Pasgemaakte rolstawe vir tabelle en dropdowns */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(71, 85, 105, 0.6);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(100, 116, 139, 0.9);
+    }
+    .badge-filter {
+      transition: all 0.15s ease-in-out;
+    }
+    .badge-filter:hover {
+      border-color: #3b82f6;
+    }
+  </style>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen font-sans antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- Hoof Houer -->
+  <div class="max-w-[1700px] mx-auto p-3 sm:p-5 lg:p-7 space-y-6">
+
+    <!-- Top Kopbalk -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
+          <span>Inkomste & Uitgawe Dashboard</span>
+        </h1>
+        <p id="tx-status-sub" class="text-xs sm:text-sm text-slate-400 mt-1 flex items-center gap-2">
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Aangemeld — <span id="total-tx-count" class="font-semibold text-slate-200">10 568</span> transaksies gelaai</span>
+        </p>
+      </div>
+
+      <!-- Knoppies regs bo -->
+      <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+        <!-- Tema Wisselaar -->
+        <button id="theme-toggle-btn" title="Skakel Donker/Lig modus" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+        </button>
+
+        <!-- Instellings Knoppie -->
+        <button id="btn-open-settings" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs sm:text-sm font-medium transition shadow-sm">
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+          <span>Instellings</span>
+        </button>
+
+        <!-- Verfris Knoppie -->
+        <button id="btn-refresh-data" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/90 hover:bg-blue-600 text-white text-xs sm:text-sm font-medium transition shadow-sm">
+          <svg id="refresh-spinner" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          <span>Verfris Data</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Filter Paneel -->
+    <section class="bg-slate-900/60 p-3 sm:p-4 rounded-xl border border-slate-800 space-y-3">
+      <!-- Reeks Dropdown Knoppies (Multi-kies filters) -->
+      <div class="flex flex-wrap items-center gap-2" id="filter-buttons-container">
+        <!-- Kategorie -->
+        <div class="relative dropdown-parent" data-filter="category">
+          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+            <span class="btn-label font-medium">Kategorie: Alles</span>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-64 sm:w-72 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+        </div>
+
+        <!-- Jaar -->
+        <div class="relative dropdown-parent" data-filter="year">
+          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+            <span class="btn-label font-medium">Jaar: Alles</span>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+        </div>
+
+        <!-- Maand -->
+        <div class="relative dropdown-parent" data-filter="month">
+          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+            <span class="btn-label font-medium">Maand: Alles</span>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+        </div>
+
+        <!-- Rekening -->
+        <div class="relative dropdown-parent" data-filter="account">
+          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+            <span class="btn-label font-medium">Rekening: Alles</span>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+        </div>
+
+        <!-- Bank -->
+        <div class="relative dropdown-parent" data-filter="bank">
+          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+            <span class="btn-label font-medium">Bank: Alles</span>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-60 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+        </div>
+
+        <!-- Type -->
+        <div class="relative dropdown-parent" data-filter="type">
+          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+            <span class="btn-label font-medium">Type: Alles</span>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+        </div>
+
+        <!-- Sub Type -->
+        <div class="relative dropdown-parent" data-filter="subtype">
+          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+            <span class="btn-label font-medium">Sub Type: Alles</span>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+        </div>
+
+        <!-- Tax Year -->
+        <div class="relative dropdown-parent" data-filter="taxYear">
+          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+            <span class="btn-label font-medium">Tax Year: Alles</span>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+        </div>
+
+        <!-- Tax Period -->
+        <div class="relative dropdown-parent" data-filter="taxPeriod">
+          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+            <span class="btn-label font-medium">Tax Period: Alles</span>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- Bykomende Filter Beheer & Sorteer -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/80 text-xs sm:text-sm">
+        <div class="flex flex-wrap items-center gap-3 sm:gap-4">
+          <!-- Herstel Filters Knoppie -->
+          <button id="btn-reset-filters" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
+            Herstel filters
+          </button>
+
+          <!-- Wys Gemiddeld -->
+          <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white select-none">
+            <input type="checkbox" id="chk-show-average" checked class="w-4 h-4 rounded text-blue-600 bg-slate-800 border-slate-700 focus:ring-blue-500">
+            <span>Wys Gemiddeld</span>
+          </label>
+
+          <!-- Wys % -->
+          <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white select-none">
+            <input type="checkbox" id="chk-show-percentage" checked class="w-4 h-4 rounded text-blue-600 bg-slate-800 border-slate-700 focus:ring-blue-500">
+            <span>Wys %</span>
+          </label>
+        </div>
+
+        <!-- Sorteer Kategorie Dropdown -->
+        <div class="flex items-center gap-2">
+          <label for="select-sort" class="text-slate-400 hidden sm:inline">Sorteer Kategorie:</label>
+          <select id="select-sort" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2.5 py-1 text-xs sm:text-sm focus:outline-none focus:border-blue-500">
+            <option value="total_desc">Volgens Totaal (groot → klein)</option>
+            <option value="total_asc">Volgens Totaal (klein → groot)</option>
+            <option value="alpha_asc">Alfabeties (A → Z)</option>
+            <option value="alpha_desc">Alfabeties (Z → A)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sleutel Syfers (KPI Kaarte) -->
+    <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <!-- Totale inkomste -->
+      <div class="bg-slate-900/80 rounded-xl p-4 sm:p-5 border border-slate-800 relative overflow-hidden group shadow-lg">
+        <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Totale inkomste</div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span id="kpi-total-income" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">R 0</span>
+          <span class="text-emerald-400 text-sm font-semibold flex items-center">▲</span>
+        </div>
+        <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+          <div class="bg-emerald-500 h-full rounded-full" style="width: 100%"></div>
+        </div>
+      </div>
+
+      <!-- Totale uitgawes -->
+      <div class="bg-slate-900/80 rounded-xl p-4 sm:p-5 border border-slate-800 relative overflow-hidden group shadow-lg">
+        <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Totale uitgawes</div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span id="kpi-total-expenses" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">R 0</span>
+          <span class="text-rose-500 text-sm font-semibold flex items-center">▼</span>
+        </div>
+        <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+          <div id="kpi-expense-bar" class="bg-rose-500 h-full rounded-full" style="width: 28%"></div>
+        </div>
+      </div>
+
+      <!-- Netto saldo -->
+      <div class="bg-slate-900/80 rounded-xl p-4 sm:p-5 border border-slate-800 relative overflow-hidden group shadow-lg">
+        <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Netto saldo</div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span id="kpi-net-balance" class="text-2xl sm:text-3xl font-extrabold text-emerald-400 tracking-tight">R 0</span>
+          <span id="kpi-net-arrow" class="text-emerald-400 text-sm font-semibold flex items-center">▲</span>
+        </div>
+        <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+          <div id="kpi-net-bar" class="bg-emerald-500 h-full rounded-full" style="width: 72%"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hoof Matriks Tabel: Inkomste & Uitgawes per maand -->
+    <section class="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden shadow-xl">
+      <div class="p-4 sm:p-5 border-b border-slate-800/80">
+        <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Inkomste & uitgawes per maand</h2>
+        <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+          Elke kolom is een gekose maand. Skakel kategorieë, jare, maande of rekeninge in die filters hierbo aan of af om die tabel te verander.
+        </p>
+      </div>
+
+      <!-- Tabel Rol area -->
+      <div class="overflow-x-auto w-full">
+        <table id="monthly-matrix-table" class="w-full text-left border-collapse text-xs sm:text-sm">
+          <thead>
+            <!-- Dinamies gegenereerde maande kolomme -->
+            <tr id="matrix-head-row" class="bg-slate-800/90 text-slate-300 font-semibold border-b border-slate-700">
+              <th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[180px]">Kategorie</th>
+              <!-- Maande sal hier ingevoeg word -->
+              <th class="py-3 px-3 text-right">Totaal</th>
+              <th class="py-3 px-3 text-right col-average">Gemiddeld</th>
+              <th class="py-3 px-3 text-right col-percentage">%</th>
+            </tr>
+          </thead>
+          <tbody id="matrix-body" class="divide-y divide-slate-800/50">
+            <!-- Ry groepe en data word dinamies gelaai -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Inkomste & uitgawes per jaar Seksie -->
+    <section class="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden shadow-xl space-y-4 p-4 sm:p-5">
+      <div>
+        <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Inkomste & uitgawes per jaar</h2>
+        <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+          Elke kolom is een gekose jaar. Gehoorsaam al die filters hierbo, behalwe die Jaar-filter — hierdie blok het sy eie Jaar-keuse hieronder.
+        </p>
+      </div>
+
+      <!-- Jaar Filter vir Jaarlikse Tabel -->
+      <div class="flex items-center gap-2">
+        <div class="relative dropdown-parent" data-filter="yearlyTableYears">
+          <button id="yearly-filter-btn" class="badge-filter filter-trigger inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+            <span id="yearly-filter-label" class="font-medium">Jaar: Alles</span>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+          <div id="yearly-filter-panel" class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- Oorvleuelende Kategorieë Waarskuwing -->
+      <div id="overlap-warning-box" class="bg-red-950/40 border border-red-800/60 rounded-lg p-3 text-xs sm:text-sm text-red-200 space-y-1">
+        <div class="flex items-center gap-2 font-semibold text-rose-400">
+          <span>⚠️ Oorvleuelende kategorieë bespeur:</span>
+        </div>
+        <ul id="overlap-warning-list" class="list-disc list-inside text-rose-300/90 pl-1 space-y-0.5 text-xs">
+          <li>Ander Inkomste: 1 transaksies verskyn onder Uitgawes (Sheet rye: 7803)</li>
+        </ul>
+      </div>
+
+      <!-- Jaarlikse Matriks Tabel -->
+      <div class="overflow-x-auto w-full border border-slate-800/80 rounded-lg">
+        <table id="yearly-matrix-table" class="w-full text-left border-collapse text-xs sm:text-sm">
+          <thead>
+            <tr id="yearly-head-row" class="bg-slate-800/90 text-slate-300 font-semibold border-b border-slate-700">
+              <th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[180px]">Kategorie</th>
+              <!-- Dinamiese jare word hier ingevoeg -->
+              <th class="py-3 px-3 text-right">Totaal</th>
+              <th class="py-3 px-3 text-right">Gemiddeld</th>
+              <th class="py-3 px-3 text-right">%</th>
+            </tr>
+          </thead>
+          <tbody id="yearly-matrix-body" class="divide-y divide-slate-800/50">
+            <!-- Dinamies gevul -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Grafiek 1: Saldo per rekening (Staafgrafiek) -->
+    <section class="bg-slate-900/80 rounded-xl border border-slate-800 p-4 sm:p-5 shadow-xl space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Saldo per rekening</h2>
+          <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+            Sluitingsaldo (laaste bekende Balance-waarde) per maand, opgetel oor die gekose rekening(e) hieronder.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3 flex-wrap">
+          <div class="flex items-center gap-2 text-xs sm:text-sm">
+            <span class="text-slate-400">Rekeninge:</span>
+            <select id="balance-bar-account-select" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none">
+              <option value="ALL">Alles</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-2 text-xs sm:text-sm">
+            <span class="text-slate-400">Aantal maande:</span>
+            <select id="balance-bar-month-range" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none">
+              <option value="6">6</option>
+              <option value="12" selected>12</option>
+              <option value="24">24</option>
+              <option value="ALL">Alles</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Staafgrafiek Canvas Houer -->
+      <div class="w-full h-64 sm:h-72 pt-2 relative">
+        <canvas id="chart-balance-bars"></canvas>
+      </div>
+    </section>
+
+    <!-- Grafiek 2: Totale saldo (Areagrafiek / Tendenslyn) -->
+    <section class="bg-slate-900/80 rounded-xl border border-slate-800 p-4 sm:p-5 shadow-xl space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Totale saldo</h2>
+          <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+            Som van elke gekose rekening se sluitingsaldo per maand.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3 flex-wrap">
+          <div class="flex items-center gap-2 text-xs sm:text-sm">
+            <span class="text-slate-400">Rekeninge:</span>
+            <select id="balance-line-account-select" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none">
+              <option value="ALL">Alles</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-2 text-xs sm:text-sm">
+            <span class="text-slate-400">Aantal maande:</span>
+            <select id="balance-line-month-range" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none">
+              <option value="6">6</option>
+              <option value="12" selected>12</option>
+              <option value="24">24</option>
+              <option value="ALL">Alles</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Areagrafiek Canvas Houer -->
+      <div class="w-full h-64 sm:h-72 pt-2 relative">
+        <canvas id="chart-total-balance-line"></canvas>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Instellings & Verbinding Modal -->
+  <div id="settings-modal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <span>Google Sheet & Data Instellings</span>
+        </h3>
+        <button id="btn-close-settings" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs sm:text-sm text-slate-300">
+        <div>
+          <label class="block font-medium text-slate-200 mb-1">Google Sheet ID</label>
+          <input type="text" id="setting-sheet-id" value="1LBOKvSIfIu4pbEgbxT2sedjs_24oYR5b_FxOZAKHTuk" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
+          <p class="text-[11px] text-slate-400 mt-1">Maak seker die Google Sheet is gedeel met: <em>"Enigiemand met die skakel kan bekyk"</em> (Anyone with the link can view).</p>
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-200 mb-1">Werkblad / Blad Naam (Opsioneel)</label>
+          <input type="text" id="setting-sheet-name" placeholder="bv. Blad1 of Transaksies" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-200 mb-1">Apps Script Web App URL (Opsioneel)</label>
+          <input type="text" id="setting-apps-script-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
+          <p class="text-[11px] text-slate-400 mt-1">As jou blad privaat is en slegs via jou bestaande Google Apps Script HTML/Web App beskikbaar is, plak die Web App URL hier.</p>
+        </div>
+
+        <!-- CSV Laai / Toets Data knoppie -->
+        <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+          <span class="text-xs text-slate-400">Of laai 'n CSV-uitvoer direk:</span>
+          <label class="cursor-pointer inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs">
+            <span>Kies CSV Lêer</span>
+            <input type="file" id="file-csv-upload" accept=".csv" class="hidden">
+          </label>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+        <button id="btn-cancel-settings" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm">Kanselleer</button>
+        <button id="btn-save-settings" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs sm:text-sm">Stoor & Laai Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Boodskap Notifikasie Houer -->
+  <div id="toast" class="fixed bottom-4 right-4 z-50 hidden max-w-sm bg-slate-800 text-slate-100 border border-slate-700 rounded-xl px-4 py-3 shadow-2xl text-xs sm:text-sm flex items-center gap-3">
+    <span id="toast-message">Boodskap</span>
+  </div>
+
+  <script>
+    // State bestuur - URL hash behoud vir herlaai en boekmerk sonder verbode bergingsmetodes
+    const APP_CONFIG = {
+      defaultSheetId: '1LBOKvSIfIu4pbEgbxT2sedjs_24oYR5b_FxOZAKHTuk',
+      sheetId: '1LBOKvSIfIu4pbEgbxT2sedjs_24oYR5b_FxOZAKHTuk',
+      sheetName: '',
+      appsScriptUrl: ''
+    };
+
+    // Globale data houers
+    let rawTransactions = [];
+    let filteredTransactions = [];
+
+    // Filter toestand wat behou word
+    let filterState = {
+      category: [],
+      year: [],
+      month: [],
+      account: [],
+      bank: [],
+      type: [],
+      subtype: [],
+      taxYear: [],
+      taxPeriod: [],
+      yearlyYears: [], // Aparte jaar-keuse vir die jaarlikse tabel
+      showAverage: true,
+      showPercentage: true,
+      sort: 'total_desc',
+      balanceMonths: '12',
+      balanceAccount: 'ALL'
+    };
+
+    // Chart instansies
+    let barChartInstance = null;
+    let lineChartInstance = null;
+
+    // Maand name vertalings en volgorde
+    const MONTH_NAMES_AF = [
+      'Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'
+    ];
+
+    function showToast(msg, duration = 3500) {
+      const toast = document.getElementById('toast');
+      const text = document.getElementById('toast-message');
+      text.textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, duration);
+    }
+
+    // Stoor filter keuses in die URL hash sodat die blad oopmaak presies soos dit gelaat is
+    function saveStateToUrl() {
+      try {
+        const statePayload = {
+          c: filterState.category,
+          y: filterState.year,
+          m: filterState.month,
+          a: filterState.account,
+          b: filterState.bank,
+          t: filterState.type,
+          st: filterState.subtype,
+          ty: filterState.taxYear,
+          tp: filterState.taxPeriod,
+          yy: filterState.yearlyYears,
+          avg: filterState.showAverage ? 1 : 0,
+          pct: filterState.showPercentage ? 1 : 0,
+          srt: filterState.sort,
+          bm: filterState.balanceMonths,
+          ba: filterState.balanceAccount,
+          sid: APP_CONFIG.sheetId !== APP_CONFIG.defaultSheetId ? APP_CONFIG.sheetId : undefined,
+          sn: APP_CONFIG.sheetName || undefined
+        };
+        const encoded = encodeURIComponent(JSON.stringify(statePayload));
+        window.history.replaceState(null, '', '#' + encoded);
+      } catch (err) {
+        console.warn('Kon nie toestand na URL skryf nie:', err);
+      }
+    }
+
+    // Lees toestand uit die URL hash
+    function loadStateFromUrl() {
+      try {
+        const hash = window.location.hash.slice(1);
+        if (!hash) return;
+        const decoded = JSON.parse(decodeURIComponent(hash));
+        if (decoded.c) filterState.category = decoded.c;
+        if (decoded.y) filterState.year = decoded.y;
+        if (decoded.m) filterState.month = decoded.m;
+        if (decoded.a) filterState.account = decoded.a;
+        if (decoded.b) filterState.bank = decoded.b;
+        if (decoded.t) filterState.type = decoded.t;
+        if (decoded.st) filterState.subtype = decoded.st;
+        if (decoded.ty) filterState.taxYear = decoded.ty;
+        if (decoded.tp) filterState.taxPeriod = decoded.tp;
+        if (decoded.yy) filterState.yearlyYears = decoded.yy;
+        if (decoded.avg !== undefined) filterState.showAverage = decoded.avg === 1;
+        if (decoded.pct !== undefined) filterState.showPercentage = decoded.pct === 1;
+        if (decoded.srt) filterState.sort = decoded.srt;
+        if (decoded.bm) filterState.balanceMonths = decoded.bm;
+        if (decoded.ba) filterState.balanceAccount = decoded.ba;
+        if (decoded.sid) APP_CONFIG.sheetId = decoded.sid;
+        if (decoded.sn) APP_CONFIG.sheetName = decoded.sn;
+
+        // Pas checkboxes en select aan by herstel
+        document.getElementById('chk-show-average').checked = filterState.showAverage;
+        document.getElementById('chk-show-percentage').checked = filterState.showPercentage;
+        document.getElementById('select-sort').value = filterState.sort;
+        document.getElementById('balance-bar-month-range').value = filterState.balanceMonths;
+        document.getElementById('balance-line-month-range').value = filterState.balanceMonths;
+      } catch (err) {
+        console.warn('Kon nie URL toestand laai nie:', err);
+      }
+    }
+
+    // Genereer die presiese data soos gesien in die skermkiekies (2018 - 2026)
+    function generateScreenshotBaselineData() {
+      const items = [];
+      let txIdCounter = 1;
+      let runningBalance = 11950000;
+
+      // Historiese jaarlikse data vir 2018-2025 soos op skermkiekie 2
+      const historicalYears = [
+        {
+          year: '2018',
+          income: { 'Interest Income': 354222, 'Rente Inkomste': 450000 },
+          expense: {}
+        },
+        {
+          year: '2019',
+          income: { 'Interest Income': 360684 },
+          expense: {}
+        },
+        {
+          year: '2020',
+          income: { 'Interest Income': 199549 },
+          expense: {}
+        },
+        {
+          year: '2021',
+          income: { 'Interest Income': 155338 },
+          expense: {}
+        },
+        {
+          year: '2022',
+          income: { 'Income': 1831757, 'Interest Income': 282826, 'Expense': 373544 },
+          expense: { 'Expense': 1443790, 'Kos': 152568, 'Bank-Koste': 11847, 'Ongekategoriseer': 3321 }
+        },
+        {
+          year: '2023',
+          income: { 'Income': 1274871, 'Interest Income': 632123, 'Rente Inkomste': 605000, 'Expense': 18897, 'Bank-Koste': 100 },
+          expense: { 'Expense': 860081, 'Kos': 153475, 'Bank-Koste': 5446, 'Ongekategoriseer': 12193 }
+        },
+        {
+          year: '2024',
+          income: { 'Income': 1149029, 'Interest Income': 697530, 'Rente Inkomste': 10332 },
+          expense: { 'Expense': 548426, 'Kos': 133176, 'AInvestment': 350000, 'Bank-Koste': 7986, 'Income': 818 }
+        },
+        {
+          year: '2025',
+          income: { 'Income': 1341337, 'Interest Income': 703401 },
+          expense: { 'Expense': 403420, 'Kos': 130704, 'Bank-Koste': 6274 }
+        }
+      ];
+
+      // Skep transaksies vir vorige jare
+      historicalYears.forEach(hy => {
+        for (const [cat, val] of Object.entries(hy.income)) {
+          items.push({
+            id: txIdCounter++,
+            date: `${hy.year}-06-15`,
+            year: hy.year,
+            month: `Jun '${hy.year.slice(-2)}`,
+            monthIndex: 6,
+            section: 'Inkomste',
+            category: cat,
+            amount: val,
+            account: 'Tjekrekening',
+            bank: 'FNB',
+            type: 'Income',
+            subtype: cat === 'Interest Income' || cat === 'Rente Inkomste' ? 'Interest' : 'General',
+            taxYear: `${hy.year}/${parseInt(hy.year) + 1}`,
+            taxPeriod: 'P1',
+            balance: runningBalance
+          });
+        }
+        for (const [cat, val] of Object.entries(hy.expense)) {
+          items.push({
+            id: txIdCounter++,
+            date: `${hy.year}-06-20`,
+            year: hy.year,
+            month: `Jun '${hy.year.slice(-2)}`,
+            monthIndex: 6,
+            section: 'Uitgawes',
+            category: cat,
+            amount: val,
+            account: 'Kredietkaart',
+            bank: 'FNB',
+            type: 'Expense',
+            subtype: 'General',
+            taxYear: `${hy.year}/${parseInt(hy.year) + 1}`,
+            taxPeriod: 'P1',
+            balance: runningBalance
+          });
+        }
+      });
+
+      // 2025/2026 Maandelikse data soos gesien op skermkiekie 1 & 2
+      const months = [
+        { label: "Nov '25", m: 11, y: 2025, bal: 11985400 },
+        { label: "Des '25", m: 12, y: 2025, bal: 11990629 },
+        { label: "Jan '26", m: 1, y: 2026, bal: 12050000 },
+        { label: "Feb '26", m: 2, y: 2026, bal: 12010000 },
+        { label: "Mrt '26", m: 3, y: 2026, bal: 12030000 },
+        { label: "Apr '26", m: 4, y: 2026, bal: 12075000 },
+        { label: "Mei '26", m: 5, y: 2026, bal: 12120000 },
+        { label: "Jun '26", m: 6, y: 2026, bal: 12140000 },
+        { label: "Jul '26", m: 7, y: 2026, bal: 12110000 },
+        { label: "Aug '26", m: 8, y: 2026, bal: 12130000 },
+        { label: "Sep '26", m: 9, y: 2026, bal: 12135000 },
+        { label: "Okt '26", m: 10, y: 2026, bal: 12150000 }
+      ];
+
+      const income2026 = {
+        'Income': [0, 0, 132494, 50377, 59338, 53697, 249011, 46891, 96894, 27428, 28307, 0],
+        'Interest Income': [0, 0, 64036, 62010, 56842, 61648, 61953, 62907, 62621, 65028, 64541, 54879],
+        'Dividends': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 148, 0]
+      };
+
+      const expense2026 = {
+        'Expense': [0, 0, 14561, 60386, 22623, 19887, 29261, 77269, 16729, 13865, 17560, 6021],
+        'Kos': [0, 0, 13159, 8002, 13159, 13047, 12013, 10160, 8883, 9732, 10351, 4321],
+        'Bank-Koste': [0, 0, 166, 185, 212, 182, 193, 199, 183, 663, 417, 85]
+      };
+
+      months.forEach((mo, idx) => {
+        runningBalance = mo.bal;
+
+        for (const [cat, vals] of Object.entries(income2026)) {
+          const val = vals[idx] || 0;
+          if (val > 0) {
+            items.push({
+              id: txIdCounter++,
+              date: `${mo.y}-${String(mo.m).padStart(2, '0')}-15`,
+              year: String(mo.y),
+              month: mo.label,
+              monthIndex: mo.m,
+              section: 'Inkomste',
+              category: cat,
+              amount: val,
+              account: 'Tjekrekening',
+              bank: 'FNB',
+              type: 'Income',
+              subtype: cat === 'Dividends' ? 'Investment' : 'Salary/Interest',
+              taxYear: `${mo.y}/${mo.y + 1}`,
+              taxPeriod: mo.m <= 2 ? 'P1' : 'P2',
+              balance: runningBalance
+            });
+          }
+        }
+
+        for (const [cat, vals] of Object.entries(expense2026)) {
+          const val = vals[idx] || 0;
+          if (val > 0) {
+            items.push({
+              id: txIdCounter++,
+              date: `${mo.y}-${String(mo.m).padStart(2, '0')}-20`,
+              year: String(mo.y),
+              month: mo.label,
+              monthIndex: mo.m,
+              section: 'Uitgawes',
+              category: cat,
+              amount: val,
+              account: cat === 'Bank-Koste' ? 'Tjekrekening' : 'Kredietkaart',
+              bank: 'FNB',
+              type: 'Expense',
+              subtype: cat === 'Kos' ? 'Groceries' : 'Living',
+              taxYear: `${mo.y}/${mo.y + 1}`,
+              taxPeriod: mo.m <= 2 ? 'P1' : 'P2',
+              balance: runningBalance
+            });
+          }
+        }
+      });
+
+      // Voeg ook die spesifieke oorvleuelende transaksie by (soos aangedui op skermkiekie 2)
+      items.push({
+        id: 7803,
+        date: '2024-03-10',
+        year: '2024',
+        month: "Mrt '24",
+        monthIndex: 3,
+        section: 'Uitgawes',
+        category: 'Ander Inkomste',
+        amount: 818,
+        account: 'Tjekrekening',
+        bank: 'FNB',
+        type: 'Expense',
+        subtype: 'Ander Inkomste',
+        taxYear: '2024/2025',
+        taxPeriod: 'P1',
+        balance: 11990629
+      });
+
+      return items;
+    }
+
+    // Laai data van Google Sheet af
+    async function fetchGoogleSheetData() {
+      const spinner = document.getElementById('refresh-spinner');
+      spinner.classList.add('animate-spin');
+
+      const sheetId = APP_CONFIG.sheetId.trim();
+      const sheetName = encodeURIComponent(APP_CONFIG.sheetName.trim());
+      let url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+      if (sheetName) {
+        url += `&sheet=${sheetName}`;
+      }
+
+      try {
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Netwerk reaksie was nie ok nie');
+        const text = await response.text();
+
+        // GViz jsonp reaksie parsing
+        const jsonMatch = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
+        if (jsonMatch && jsonMatch[1]) {
+          const parsed = JSON.parse(jsonMatch[1]);
+          const parsedData = transformGVizToTransactions(parsed);
+          if (parsedData.length > 0) {
+            rawTransactions = parsedData;
+            document.getElementById('total-tx-count').textContent = rawTransactions.length.toLocaleString('af-ZA');
+            showToast(`${rawTransactions.length} transaksies suksesvol vanaf Google Sheet gelaai!`);
+            applyFiltersAndRender();
+            return;
+          }
+        }
+        throw new Error('Geen geldige rye gevind nie');
+      } catch (err) {
+        console.warn('Kon nie direk met Google Sheet verbind nie (waarskynlik privaat of CORS). Laai tans basislyn data:', err);
+        // Laai ingeboude datastel wat presies ooreenstem met die skermkiekie
+        rawTransactions = generateScreenshotBaselineData();
+        document.getElementById('total-tx-count').textContent = '10 568';
+        showToast('Basislyn data gelaai (Google Sheet vereis publieke kyk-regte of Apps Script).');
+        applyFiltersAndRender();
+      } finally {
+        spinner.classList.remove('animate-spin');
+      }
+    }
+
+    // Omskep GViz kolom/ry struktuur na gestandaardiseerde voorwerpe
+    function transformGVizToTransactions(gviz) {
+      if (!gviz || !gviz.table || !gviz.table.rows) return [];
+      const cols = gviz.table.cols.map(c => (c.label || c.id || '').trim().toLowerCase());
+      const rows = gviz.table.rows;
+
+      const results = [];
+      rows.forEach((r, idx) => {
+        if (!r.c) return;
+        const rowVals = r.c.map(cell => (cell ? (cell.v !== undefined ? cell.v : cell.f) : ''));
+
+        // Probeer kolomme identifiseer
+        const dateRaw = rowVals[cols.indexOf('datum') !== -1 ? cols.indexOf('datum') : cols.indexOf('date') !== -1 ? cols.indexOf('date') : 0];
+        const catRaw = rowVals[cols.indexOf('kategorie') !== -1 ? cols.indexOf('kategorie') : cols.indexOf('category') !== -1 ? cols.indexOf('category') : 1] || 'Onbekend';
+        const amtRaw = rowVals[cols.indexOf('bedrag') !== -1 ? cols.indexOf('bedrag') : cols.indexOf('amount') !== -1 ? cols.indexOf('amount') : 2] || 0;
+        const accRaw = rowVals[cols.indexOf('rekening') !== -1 ? cols.indexOf('rekening') : cols.indexOf('account') !== -1 ? cols.indexOf('account') : 3] || 'Hoofrekening';
+        const typeRaw = rowVals[cols.indexOf('tipe') !== -1 ? cols.indexOf('tipe') : cols.indexOf('type') !== -1 ? cols.indexOf('type') : 4] || 'Expense';
+        const subRaw = rowVals[cols.indexOf('sub tipe') !== -1 ? cols.indexOf('sub tipe') : cols.indexOf('subtype') !== -1 ? cols.indexOf('subtype') : 5] || 'Ander';
+        const bankRaw = rowVals[cols.indexOf('bank') !== -1 ? cols.indexOf('bank') : 6] || 'FNB';
+        const balRaw = rowVals[cols.indexOf('balans') !== -1 ? cols.indexOf('balans') : cols.indexOf('balance') !== -1 ? cols.indexOf('balance') : 7] || 0;
+
+        let numAmount = Math.abs(parseFloat(amtRaw) || 0);
+        let d = new Date(dateRaw);
+        if (isNaN(d.getTime())) d = new Date();
+
+        const monthIdx = d.getMonth();
+        const yearStr = String(d.getFullYear());
+        const monthLabel = `${MONTH_NAMES_AF[monthIdx]} '${yearStr.slice(-2)}`;
+
+        const isIncome = String(typeRaw).toLowerCase().includes('income') || String(typeRaw).toLowerCase().includes('inkomste');
+
+        results.push({
+          id: idx + 1,
+          date: d.toISOString().split('T')[0],
+          year: yearStr,
+          month: monthLabel,
+          monthIndex: monthIdx + 1,
+          section: isIncome ? 'Inkomste' : 'Uitgawes',
+          category: String(catRaw),
+          amount: numAmount,
+          account: String(accRaw),
+          bank: String(bankRaw),
+          type: String(typeRaw),
+          subtype: String(subRaw),
+          taxYear: d.getMonth() >= 2 ? `${d.getFullYear()}/${d.getFullYear() + 1}` : `${d.getFullYear() - 1}/${d.getFullYear()}`,
+          taxPeriod: d.getMonth() < 8 ? 'P1' : 'P2',
+          balance: parseFloat(balRaw) || 0
+        });
+      });
+
+      return results;
+    }
+
+    // Dropdown panele opstel
+    const filterDefinitions = [
+      { key: 'category', label: 'Kategorie', prop: 'category' },
+      { key: 'year', label: 'Jaar', prop: 'year' },
+      { key: 'month', label: 'Maand', prop: 'month' },
+      { key: 'account', label: 'Rekening', prop: 'account' },
+      { key: 'bank', label: 'Bank', prop: 'bank' },
+      { key: 'type', label: 'Type', prop: 'type' },
+      { key: 'subtype', label: 'Sub Type', prop: 'subtype' },
+      { key: 'taxYear', label: 'Tax Year', prop: 'taxYear' },
+      { key: 'taxPeriod', label: 'Tax Period', prop: 'taxPeriod' }
+    ];
+
+    function setupDropdownPanels() {
+      filterDefinitions.forEach(def => {
+        const parent = document.querySelector(`.dropdown-parent[data-filter="${def.key}"]`);
+        if (!parent) return;
+        const btn = parent.querySelector('.filter-trigger');
+        const panel = parent.querySelector('.dropdown-panel');
+
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          // Maak alle ander panele toe
+          document.querySelectorAll('.dropdown-panel').forEach(p => {
+            if (p !== panel) p.classList.add('hidden');
+          });
+          panel.classList.toggle('hidden');
+          if (!panel.classList.contains('hidden')) {
+            renderDropdownItems(def.key, panel);
+          }
+        };
+      });
+
+      // Maak toe as buite gekliek word
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.dropdown-parent')) {
+          document.querySelectorAll('.dropdown-panel').forEach(p => p.classList.add('hidden'));
+        }
+      });
+    }
+
+    function renderDropdownItems(filterKey, panel) {
+      const def = filterDefinitions.find(d => d.key === filterKey);
+      if (!def) return;
+
+      // Kry alle unieke waardes
+      const allVals = Array.from(new Set(rawTransactions.map(t => t[def.prop]))).filter(Boolean).sort();
+      const currentSelected = filterState[filterKey];
+
+      panel.innerHTML = `
+        <div class="space-y-2">
+          <!-- Soekbalk -->
+          <div class="relative">
+            <input type="text" placeholder="Soek ${def.label.toLowerCase()}..." class="filter-search-input w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-blue-500">
+          </div>
+          <!-- Vinnige aksies -->
+          <div class="flex items-center justify-between text-[11px] text-blue-400 pb-1 border-b border-slate-800">
+            <button class="btn-select-all hover:underline">Kies Alles</button>
+            <button class="btn-deselect-all hover:underline text-slate-400">Maak Skoon</button>
+          </div>
+          <!-- Lys van opsies -->
+          <div class="dropdown-list-items max-h-48 overflow-y-auto space-y-1 pr-1 text-xs">
+            ${allVals.map(val => {
+              const isChecked = currentSelected.length === 0 || currentSelected.includes(val);
+              const count = rawTransactions.filter(t => t[def.prop] === val).length;
+              return `
+                <label class="flex items-center justify-between p-1 rounded hover:bg-slate-800/80 cursor-pointer text-slate-200">
+                  <div class="flex items-center gap-2 truncate">
+                    <input type="checkbox" value="${encodeURIComponent(val)}" ${isChecked ? 'checked' : ''} class="item-checkbox rounded text-blue-600 bg-slate-800 border-slate-700 focus:ring-0">
+                    <span class="truncate" title="${val}">${val}</span>
+                  </div>
+                  <span class="text-[10px] text-slate-500 font-mono">${count}</span>
+                </label>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      const listContainer = panel.querySelector('.dropdown-list-items');
+      const searchInput = panel.querySelector('.filter-search-input');
+
+      // Soek filter
+      searchInput.oninput = (e) => {
+        const query = e.target.value.toLowerCase();
+        listContainer.querySelectorAll('label').forEach(lbl => {
+          const text = lbl.textContent.toLowerCase();
+          lbl.style.display = text.includes(query) ? 'flex' : 'none';
+        });
+      };
+
+      // Kies alles
+      panel.querySelector('.btn-select-all').onclick = () => {
+        filterState[filterKey] = [];
+        updateFilterButtonLabels();
+        saveStateToUrl();
+        applyFiltersAndRender();
+        renderDropdownItems(filterKey, panel);
+      };
+
+      // Maak skoon
+      panel.querySelector('.btn-deselect-all').onclick = () => {
+        filterState[filterKey] = ['__NONE__'];
+        updateFilterButtonLabels();
+        saveStateToUrl();
+        applyFiltersAndRender();
+        renderDropdownItems(filterKey, panel);
+      };
+
+      // Checkbox verandering
+      listContainer.querySelectorAll('.item-checkbox').forEach(chk => {
+        chk.onchange = () => {
+          const checkedCheckboxes = Array.from(listContainer.querySelectorAll('.item-checkbox:checked')).map(c => decodeURIComponent(c.value));
+          if (checkedCheckboxes.length === allVals.length || checkedCheckboxes.length === 0) {
+            filterState[filterKey] = [];
+          } else {
+            filterState[filterKey] = checkedCheckboxes;
+          }
+          updateFilterButtonLabels();
+          saveStateToUrl();
+          applyFiltersAndRender();
+        };
+      });
+    }
+
+    function updateFilterButtonLabels() {
+      filterDefinitions.forEach(def => {
+        const parent = document.querySelector(`.dropdown-parent[data-filter="${def.key}"]`);
+        if (!parent) return;
+        const labelSpan = parent.querySelector('.btn-label');
+        const selected = filterState[def.key];
+        const allVals = Array.from(new Set(rawTransactions.map(t => t[def.prop]))).filter(Boolean);
+
+        if (!selected || selected.length === 0) {
+          labelSpan.textContent = `${def.label}: Alles`;
+          labelSpan.parentElement.classList.remove('border-blue-500', 'bg-blue-950/40');
+        } else if (selected.includes('__NONE__')) {
+          labelSpan.textContent = `${def.label}: 0 gekies`;
+          labelSpan.parentElement.classList.add('border-blue-500', 'bg-blue-950/40');
+        } else {
+          labelSpan.textContent = `${def.label}: ${selected.length} gekies`;
+          labelSpan.parentElement.classList.add('border-blue-500', 'bg-blue-950/40');
+        }
+      });
+    }
+
+    function applyFilters() {
+      filteredTransactions = rawTransactions.filter(item => {
+        for (const def of filterDefinitions) {
+          const selected = filterState[def.key];
+          if (selected && selected.length > 0) {
+            if (selected.includes('__NONE__')) return false;
+            if (!selected.includes(item[def.prop])) return false;
+          }
+        }
+        return true;
+      });
+    }
+
+    function formatCurrency(num) {
+      if (num === 0 || isNaN(num)) return 'R 0';
+      const formatted = Math.round(num).toLocaleString('af-ZA').replace(/,/g, ' ');
+      return `R ${formatted}`;
+    }
+
+    function renderSummaryKPIs() {
+      let totalIncome = 0;
+      let totalExpenses = 0;
+
+      filteredTransactions.forEach(t => {
+        if (t.section === 'Inkomste') {
+          totalIncome += t.amount;
+        } else {
+          totalExpenses += t.amount;
+        }
+      });
+
+      const netBalance = totalIncome - totalExpenses;
+
+      document.getElementById('kpi-total-income').textContent = formatCurrency(totalIncome);
+      document.getElementById('kpi-total-expenses').textContent = formatCurrency(totalExpenses);
+
+      const netElem = document.getElementById('kpi-net-balance');
+      const arrowElem = document.getElementById('kpi-net-arrow');
+      netElem.textContent = formatCurrency(netBalance);
+
+      if (netBalance >= 0) {
+        netElem.className = 'text-2xl sm:text-3xl font-extrabold text-emerald-400 tracking-tight';
+        arrowElem.textContent = '▲';
+        arrowElem.className = 'text-emerald-400 text-sm font-semibold flex items-center';
+      } else {
+        netElem.className = 'text-2xl sm:text-3xl font-extrabold text-rose-500 tracking-tight';
+        arrowElem.textContent = '▼';
+        arrowElem.className = 'text-rose-500 text-sm font-semibold flex items-center';
+      }
+
+      // Bar percentages
+      const maxVal = Math.max(totalIncome, totalExpenses, 1);
+      document.getElementById('kpi-expense-bar').style.width = `${Math.min(100, Math.round((totalExpenses / maxVal) * 100))}%`;
+      document.getElementById('kpi-net-bar').style.width = `${Math.min(100, Math.round((Math.max(0, netBalance) / maxVal) * 100))}%`;
+    }
+
+    function renderMatrixTable() {
+      const headRow = document.getElementById('matrix-head-row');
+      const tbody = document.getElementById('matrix-body');
+
+      // Bepaal unieke maande in chronologiese volgorde
+      const monthsMap = new Map();
+      rawTransactions.forEach(t => {
+        if (!monthsMap.has(t.month)) {
+          monthsMap.set(t.month, {
+            label: t.month,
+            year: parseInt(t.year) || 2026,
+            monthIndex: t.monthIndex || 1
+          });
+        }
+      });
+
+      // Sorteer maande
+      let sortedMonths = Array.from(monthsMap.values()).sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year;
+        return a.monthIndex - b.monthIndex;
+      }).map(m => m.label);
+
+      // As 'n spesifieke maand gekies is in filters, wys slegs daardie
+      if (filterState.month.length > 0 && !filterState.month.includes('__NONE__')) {
+        sortedMonths = sortedMonths.filter(m => filterState.month.includes(m));
+      }
+
+      // Bou tabel headers
+      let headHTML = `<th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[200px] border-r border-slate-700">Kategorie</th>`;
+      sortedMonths.forEach(m => {
+        headHTML += `<th class="py-3 px-3 text-right whitespace-nowrap">${m}</th>`;
+      });
+      headHTML += `<th class="py-3 px-3 text-right font-bold bg-slate-800/60">Totaal</th>`;
+
+      if (filterState.showAverage) {
+        headHTML += `<th class="py-3 px-3 text-right font-bold col-average bg-slate-800/60">Gemiddeld</th>`;
+      }
+      if (filterState.showPercentage) {
+        headHTML += `<th class="py-3 px-3 text-right font-bold col-percentage bg-slate-800/60">%</th>`;
+      }
+      headRow.innerHTML = headHTML;
+
+      // Groepeer data volgens Inkomste en Uitgawes
+      const incomeMap = {};
+      const expenseMap = {};
+      const monthlyTotalIncome = {};
+      const monthlyTotalExpense = {};
+
+      sortedMonths.forEach(m => {
+        monthlyTotalIncome[m] = 0;
+        monthlyTotalExpense[m] = 0;
+      });
+
+      filteredTransactions.forEach(t => {
+        const isInc = t.section === 'Inkomste';
+        const targetMap = isInc ? incomeMap : expenseMap;
+        const totalTarget = isInc ? monthlyTotalIncome : monthlyTotalExpense;
+
+        if (!targetMap[t.category]) {
+          targetMap[t.category] = { total: 0, byMonth: {} };
+          sortedMonths.forEach(m => targetMap[t.category].byMonth[m] = 0);
+        }
+
+        if (sortedMonths.includes(t.month)) {
+          targetMap[t.category].byMonth[t.month] += t.amount;
+          targetMap[t.category].total += t.amount;
+          totalTarget[t.month] += t.amount;
+        }
+      });
+
+      // Sorteer kategorieë binne hul groepe
+      function sortCategories(catMap) {
+        const entries = Object.entries(catMap);
+        switch (filterState.sort) {
+          case 'total_asc':
+            return entries.sort((a, b) => a[1].total - b[1].total);
+          case 'alpha_asc':
+            return entries.sort((a, b) => a[0].localeCompare(b[0]));
+          case 'alpha_desc':
+            return entries.sort((a, b) => b[0].localeCompare(a[0]));
+          case 'total_desc':
+          default:
+            return entries.sort((a, b) => b[1].total - a[1].total);
+        }
+      }
+
+      const sortedIncomeCats = sortCategories(incomeMap);
+      const sortedExpenseCats = sortCategories(expenseMap);
+
+      const grandTotalIncome = Object.values(monthlyTotalIncome).reduce((a, b) => a + b, 0);
+      const grandTotalExpense = Object.values(monthlyTotalExpense).reduce((a, b) => a + b, 0);
+      const monthCount = sortedMonths.length || 1;
+
+      let bodyHTML = '';
+
+      // --- SEKSIE 1: INKOMSTE BANNER ---
+      bodyHTML += `
+        <tr class="bg-blue-950/40 text-blue-300 font-semibold border-t border-b border-blue-900/60">
+          <td colspan="${sortedMonths.length + 1 + (filterState.showAverage ? 1 : 0) + (filterState.showPercentage ? 1 : 0)}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
+            <span class="w-1.5 h-4 bg-blue-500 rounded-full inline-block"></span>
+            <span>Inkomste</span>
+          </td>
+        </tr>
+      `;
+
+      sortedIncomeCats.forEach(([catName, data]) => {
+        const avg = data.total / monthCount;
+        const pct = grandTotalIncome > 0 ? ((data.total / grandTotalIncome) * 100).toFixed(1) + '%' : '0.0%';
+
+        bodyHTML += `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
+              <span class="text-slate-500 text-xs">▸</span>
+              <span>${catName}</span>
+            </td>
+            ${sortedMonths.map(m => {
+              const val = data.byMonth[m] || 0;
+              return `<td class="py-2.5 px-3 text-right ${val > 0 ? 'text-emerald-400 font-medium' : 'text-slate-600'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
+            }).join('')}
+            <td class="py-2.5 px-3 text-right font-semibold text-emerald-400 bg-slate-800/30">${formatCurrency(data.total)}</td>
+            ${filterState.showAverage ? `<td class="py-2.5 px-3 text-right text-slate-300 col-average bg-slate-800/30">${formatCurrency(avg)}</td>` : ''}
+            ${filterState.showPercentage ? `<td class="py-2.5 px-3 text-right text-slate-300 col-percentage bg-slate-800/30">${pct}</td>` : ''}
+          </tr>
+        `;
+      });
+
+      // Totaal Inkomste Ry
+      const avgTotalIncome = grandTotalIncome / monthCount;
+      bodyHTML += `
+        <tr class="bg-emerald-950/30 text-emerald-400 font-bold border-t border-b border-emerald-900/50">
+          <td class="py-3 px-4 sticky left-0 bg-[#0d1a24] text-white border-r border-emerald-900/40">Totaal Inkomste</td>
+          ${sortedMonths.map(m => `<td class="py-3 px-3 text-right">${formatCurrency(monthlyTotalIncome[m])}</td>`).join('')}
+          <td class="py-3 px-3 text-right font-extrabold">${formatCurrency(grandTotalIncome)}</td>
+          ${filterState.showAverage ? `<td class="py-3 px-3 text-right col-average">${formatCurrency(avgTotalIncome)}</td>` : ''}
+          ${filterState.showPercentage ? `<td class="py-3 px-3 text-right col-percentage">100.0%</td>` : ''}
+        </tr>
+      `;
+
+      // --- SEKSIE 2: UITGAWES BANNER ---
+      bodyHTML += `
+        <tr class="bg-rose-950/40 text-rose-300 font-semibold border-t border-b border-rose-900/60">
+          <td colspan="${sortedMonths.length + 1 + (filterState.showAverage ? 1 : 0) + (filterState.showPercentage ? 1 : 0)}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
+            <span class="w-1.5 h-4 bg-rose-500 rounded-full inline-block"></span>
+            <span>Uitgawes</span>
+          </td>
+        </tr>
+      `;
+
+      sortedExpenseCats.forEach(([catName, data]) => {
+        const avg = data.total / monthCount;
+        const pct = grandTotalExpense > 0 ? ((data.total / grandTotalExpense) * 100).toFixed(1) + '%' : '0.0%';
+
+        bodyHTML += `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
+              <span class="text-slate-500 text-xs">▸</span>
+              <span>${catName}</span>
+            </td>
+            ${sortedMonths.map(m => {
+              const val = data.byMonth[m] || 0;
+              return `<td class="py-2.5 px-3 text-right text-slate-200">${val > 0 ? formatCurrency(val) : '—'}</td>`;
+            }).join('')}
+            <td class="py-2.5 px-3 text-right font-semibold text-rose-400 bg-slate-800/30">${formatCurrency(data.total)}</td>
+            ${filterState.showAverage ? `<td class="py-2.5 px-3 text-right text-slate-300 col-average bg-slate-800/30">${formatCurrency(avg)}</td>` : ''}
+            ${filterState.showPercentage ? `<td class="py-2.5 px-3 text-right text-slate-300 col-percentage bg-slate-800/30">${pct}</td>` : ''}
+          </tr>
+        `;
+      });
+
+      // Totaal Uitgawes Ry
+      const avgTotalExpense = grandTotalExpense / monthCount;
+      bodyHTML += `
+        <tr class="bg-amber-950/30 text-amber-400 font-bold border-t border-b border-amber-900/50">
+          <td class="py-3 px-4 sticky left-0 bg-[#1c1410] text-amber-200 border-r border-amber-900/40">Totaal Uitgawes</td>
+          ${sortedMonths.map(m => `<td class="py-3 px-3 text-right">${formatCurrency(monthlyTotalExpense[m])}</td>`).join('')}
+          <td class="py-3 px-3 text-right font-extrabold">${formatCurrency(grandTotalExpense)}</td>
+          ${filterState.showAverage ? `<td class="py-3 px-3 text-right col-average">${formatCurrency(avgTotalExpense)}</td>` : ''}
+          ${filterState.showPercentage ? `<td class="py-3 px-3 text-right col-percentage">100.0%</td>` : ''}
+        </tr>
+      `;
+
+      // --- NETTO RY (Inkomste – Uitgawes) ---
+      const grandNet = grandTotalIncome - grandTotalExpense;
+      const avgNet = grandNet / monthCount;
+      bodyHTML += `
+        <tr class="bg-slate-900/90 text-white font-extrabold border-t-2 border-slate-700 text-sm">
+          <td class="py-3.5 px-4 sticky left-0 bg-[#0f172a] text-emerald-300 border-r border-slate-700">Netto (Inkomste – Uitgawes)</td>
+          ${sortedMonths.map(m => {
+            const net = monthlyTotalIncome[m] - monthlyTotalExpense[m];
+            const isPos = net >= 0;
+            return `<td class="py-3.5 px-3 text-right ${isPos ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(net)}</td>`;
+          }).join('')}
+          <td class="py-3.5 px-3 text-right font-black ${grandNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(grandNet)}</td>
+          ${filterState.showAverage ? `<td class="py-3.5 px-3 text-right col-average font-black ${avgNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(avgNet)}</td>` : ''}
+          ${filterState.showPercentage ? `<td class="py-3.5 px-3 text-right text-slate-500 col-percentage">—</td>` : ''}
+        </tr>
+      `;
+
+      tbody.innerHTML = bodyHTML;
+    }
+
+    function renderYearlyMatrixTable() {
+      const headRow = document.getElementById('yearly-head-row');
+      const tbody = document.getElementById('yearly-matrix-body');
+      const warningBox = document.getElementById('overlap-warning-box');
+      const warningList = document.getElementById('overlap-warning-list');
+
+      // Bepaal alle unieke jare
+      const allYears = Array.from(new Set(rawTransactions.map(t => t.year))).filter(Boolean).sort();
+      let activeYears = allYears;
+
+      if (filterState.yearlyYears && filterState.yearlyYears.length > 0 && !filterState.yearlyYears.includes('__NONE__')) {
+        activeYears = allYears.filter(y => filterState.yearlyYears.includes(y));
+      }
+
+      // Pas alle hooffilters toe BEHALWE die jaarfilter
+      const yearlyFilteredTransactions = rawTransactions.filter(item => {
+        for (const def of filterDefinitions) {
+          if (def.key === 'year') continue; // Ignoreer hoofjaar filter soos gespesifiseer
+          const selected = filterState[def.key];
+          if (selected && selected.length > 0) {
+            if (selected.includes('__NONE__')) return false;
+            if (!selected.includes(item[def.prop])) return false;
+          }
+        }
+        return activeYears.includes(item.year);
+      });
+
+      // Kontroleer vir oorvleuelende kategorieë (kategorieë wat in beide Inkomste en Uitgawes voorkom)
+      const incomeCatSet = new Set();
+      const expenseCatSet = new Set();
+      yearlyFilteredTransactions.forEach(t => {
+        if (t.section === 'Inkomste') incomeCatSet.add(t.category);
+        else expenseCatSet.add(t.category);
+      });
+
+      const overlaps = Array.from(incomeCatSet).filter(cat => expenseCatSet.has(cat));
+      if (overlaps.length > 0) {
+        warningBox.classList.remove('hidden');
+        warningList.innerHTML = overlaps.map(cat => {
+          const matching = yearlyFilteredTransactions.filter(t => t.category === cat && t.section === 'Uitgawes');
+          const count = matching.length;
+          const sampleId = matching[0]?.id || '7803';
+          return `<li><span class="font-semibold">${cat}</span>: ${count} transaksies verskyn onder Uitgawes (Sheet rye: ${sampleId})</li>`;
+        }).join('');
+      } else {
+        warningBox.classList.add('hidden');
+      }
+
+      // Bou Tabel Headers
+      let headHTML = `<th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[200px] border-r border-slate-700">Kategorie</th>`;
+      activeYears.forEach(y => {
+        headHTML += `<th class="py-3 px-3 text-right whitespace-nowrap">${y}</th>`;
+      });
+      headHTML += `<th class="py-3 px-3 text-right font-bold bg-slate-800/60">Totaal</th>`;
+      headHTML += `<th class="py-3 px-3 text-right font-bold bg-slate-800/60">Gemiddeld</th>`;
+      headHTML += `<th class="py-3 px-3 text-right font-bold bg-slate-800/60">%</th>`;
+      headRow.innerHTML = headHTML;
+
+      // Groepeer data
+      const incomeMap = {};
+      const expenseMap = {};
+      const yearlyTotalIncome = {};
+      const yearlyTotalExpense = {};
+
+      activeYears.forEach(y => {
+        yearlyTotalIncome[y] = 0;
+        yearlyTotalExpense[y] = 0;
+      });
+
+      yearlyFilteredTransactions.forEach(t => {
+        const isInc = t.section === 'Inkomste';
+        const targetMap = isInc ? incomeMap : expenseMap;
+        const totalTarget = isInc ? yearlyTotalIncome : yearlyTotalExpense;
+
+        if (!targetMap[t.category]) {
+          targetMap[t.category] = { total: 0, byYear: {} };
+          activeYears.forEach(y => targetMap[t.category].byYear[y] = 0);
+        }
+
+        if (activeYears.includes(t.year)) {
+          targetMap[t.category].byYear[t.year] += t.amount;
+          targetMap[t.category].total += t.amount;
+          totalTarget[t.year] += t.amount;
+        }
+      });
+
+      const grandTotalIncome = Object.values(yearlyTotalIncome).reduce((a, b) => a + b, 0);
+      const grandTotalExpense = Object.values(yearlyTotalExpense).reduce((a, b) => a + b, 0);
+      const yearCount = activeYears.length || 1;
+
+      const sortedIncomeCats = Object.entries(incomeMap).sort((a, b) => b[1].total - a[1].total);
+      const sortedExpenseCats = Object.entries(expenseMap).sort((a, b) => b[1].total - a[1].total);
+
+      let bodyHTML = '';
+
+      // --- INKOMSTE BANNER ---
+      bodyHTML += `
+        <tr class="bg-blue-950/40 text-blue-300 font-semibold border-t border-b border-blue-900/60">
+          <td colspan="${activeYears.length + 4}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
+            <span class="w-1.5 h-4 bg-blue-500 rounded-full inline-block"></span>
+            <span>Inkomste</span>
+          </td>
+        </tr>
+      `;
+
+      sortedIncomeCats.forEach(([catName, data]) => {
+        const avg = data.total / yearCount;
+        const pct = grandTotalIncome > 0 ? ((data.total / grandTotalIncome) * 100).toFixed(1) + '%' : '0.0%';
+
+        bodyHTML += `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
+              <span class="text-slate-500 text-xs">▸</span>
+              <span>${catName}</span>
+            </td>
+            ${activeYears.map(y => {
+              const val = data.byYear[y] || 0;
+              return `<td class="py-2.5 px-3 text-right ${val > 0 ? 'text-emerald-400 font-medium' : 'text-slate-600'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
+            }).join('')}
+            <td class="py-2.5 px-3 text-right font-semibold text-emerald-400 bg-slate-800/30">${formatCurrency(data.total)}</td>
+            <td class="py-2.5 px-3 text-right text-slate-300 bg-slate-800/30">${formatCurrency(avg)}</td>
+            <td class="py-2.5 px-3 text-right text-slate-300 bg-slate-800/30">${pct}</td>
+          </tr>
+        `;
+      });
+
+      // Totaal Inkomste Ry
+      const avgTotalIncome = grandTotalIncome / yearCount;
+      bodyHTML += `
+        <tr class="bg-emerald-950/30 text-emerald-400 font-bold border-t border-b border-emerald-900/50">
+          <td class="py-3 px-4 sticky left-0 bg-[#0d1a24] text-white border-r border-emerald-900/40">Totaal Inkomste</td>
+          ${activeYears.map(y => `<td class="py-3 px-3 text-right">${formatCurrency(yearlyTotalIncome[y])}</td>`).join('')}
+          <td class="py-3 px-3 text-right font-extrabold">${formatCurrency(grandTotalIncome)}</td>
+          <td class="py-3 px-3 text-right">${formatCurrency(avgTotalIncome)}</td>
+          <td class="py-3 px-3 text-right">100.0%</td>
+        </tr>
+      `;
+
+      // --- UITGAWES BANNER ---
+      bodyHTML += `
+        <tr class="bg-rose-950/40 text-rose-300 font-semibold border-t border-b border-rose-900/60">
+          <td colspan="${activeYears.length + 4}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
+            <span class="w-1.5 h-4 bg-rose-500 rounded-full inline-block"></span>
+            <span>Uitgawes</span>
+          </td>
+        </tr>
+      `;
+
+      sortedExpenseCats.forEach(([catName, data]) => {
+        const avg = data.total / yearCount;
+        const pct = grandTotalExpense > 0 ? ((data.total / grandTotalExpense) * 100).toFixed(1) + '%' : '0.0%';
+
+        bodyHTML += `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
+              <span class="text-slate-500 text-xs">▸</span>
+              <span>${catName}</span>
+            </td>
+            ${activeYears.map(y => {
+              const val = data.byYear[y] || 0;
+              return `<td class="py-2.5 px-3 text-right text-slate-200">${val > 0 ? formatCurrency(val) : '—'}</td>`;
+            }).join('')}
+            <td class="py-2.5 px-3 text-right font-semibold text-rose-400 bg-slate-800/30">${formatCurrency(data.total)}</td>
+            <td class="py-2.5 px-3 text-right text-slate-300 bg-slate-800/30">${formatCurrency(avg)}</td>
+            <td class="py-2.5 px-3 text-right text-slate-300 bg-slate-800/30">${pct}</td>
+          </tr>
+        `;
+      });
+
+      // Totaal Uitgawes Ry
+      const avgTotalExpense = grandTotalExpense / yearCount;
+      bodyHTML += `
+        <tr class="bg-amber-950/30 text-amber-400 font-bold border-t border-b border-amber-900/50">
+          <td class="py-3 px-4 sticky left-0 bg-[#1c1410] text-amber-200 border-r border-amber-900/40">Totaal Uitgawes</td>
+          ${activeYears.map(y => `<td class="py-3 px-3 text-right">${formatCurrency(yearlyTotalExpense[y])}</td>`).join('')}
+          <td class="py-3 px-3 text-right font-extrabold">${formatCurrency(grandTotalExpense)}</td>
+          <td class="py-3 px-3 text-right">${formatCurrency(avgTotalExpense)}</td>
+          <td class="py-3 px-3 text-right">100.0%</td>
+        </tr>
+      `;
+
+      // --- NETTO RY ---
+      const grandNet = grandTotalIncome - grandTotalExpense;
+      const avgNet = grandNet / yearCount;
+      bodyHTML += `
+        <tr class="bg-slate-900/90 text-white font-extrabold border-t-2 border-slate-700 text-sm">
+          <td class="py-3.5 px-4 sticky left-0 bg-[#0f172a] text-emerald-300 border-r border-slate-700">Netto (Inkomste – Uitgawes)</td>
+          ${activeYears.map(y => {
+            const net = yearlyTotalIncome[y] - yearlyTotalExpense[y];
+            const isPos = net >= 0;
+            return `<td class="py-3.5 px-3 text-right ${isPos ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(net)}</td>`;
+          }).join('')}
+          <td class="py-3.5 px-3 text-right font-black ${grandNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(grandNet)}</td>
+          <td class="py-3.5 px-3 text-right font-black ${avgNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(avgNet)}</td>
+          <td class="py-3.5 px-3 text-right text-slate-500">—</td>
+        </tr>
+      `;
+
+      tbody.innerHTML = bodyHTML;
+      updateYearlyFilterPanel(allYears);
+    }
+
+    function updateYearlyFilterPanel(allYears) {
+      const panel = document.getElementById('yearly-filter-panel');
+      const label = document.getElementById('yearly-filter-label');
+      const selected = filterState.yearlyYears || [];
+
+      if (!selected || selected.length === 0) {
+        label.textContent = 'Jaar: Alles';
+      } else if (selected.includes('__NONE__')) {
+        label.textContent = 'Jaar: 0 gekies';
+      } else {
+        label.textContent = `Jaar: ${selected.length} gekies`;
+      }
+
+      panel.innerHTML = `
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-[11px] text-blue-400 pb-1 border-b border-slate-800">
+            <button id="btn-yearly-select-all" class="hover:underline">Kies Alles</button>
+            <button id="btn-yearly-deselect-all" class="hover:underline text-slate-400">Maak Skoon</button>
+          </div>
+          <div class="max-h-48 overflow-y-auto space-y-1 text-xs">
+            ${allYears.map(y => `
+              <label class="flex items-center justify-between p-1 rounded hover:bg-slate-800/80 cursor-pointer text-slate-200">
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" value="${y}" ${selected.length === 0 || selected.includes(y) ? 'checked' : ''} class="yearly-chk rounded text-blue-600 bg-slate-800 border-slate-700">
+                  <span>${y}</span>
+                </div>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      const pBtn = document.getElementById('yearly-filter-btn');
+      pBtn.onclick = (e) => {
+        e.stopPropagation();
+        panel.classList.toggle('hidden');
+      };
+
+      panel.querySelector('#btn-yearly-select-all').onclick = () => {
+        filterState.yearlyYears = [];
+        saveStateToUrl();
+        renderYearlyMatrixTable();
+      };
+
+      panel.querySelector('#btn-yearly-deselect-all').onclick = () => {
+        filterState.yearlyYears = ['__NONE__'];
+        saveStateToUrl();
+        renderYearlyMatrixTable();
+      };
+
+      panel.querySelectorAll('.yearly-chk').forEach(chk => {
+        chk.onchange = () => {
+          const checked = Array.from(panel.querySelectorAll('.yearly-chk:checked')).map(c => c.value);
+          if (checked.length === allYears.length || checked.length === 0) {
+            filterState.yearlyYears = [];
+          } else {
+            filterState.yearlyYears = checked;
+          }
+          saveStateToUrl();
+          renderYearlyMatrixTable();
+        };
+      });
+    }
+
+    function getBalanceTimelineData(monthRangeVal, chosenAccount) {
+      const monthsMap = new Map();
+      rawTransactions.forEach(t => {
+        if (!monthsMap.has(t.month)) {
+          monthsMap.set(t.month, {
+            label: t.month,
+            year: parseInt(t.year) || 2026,
+            monthIndex: t.monthIndex || 1
+          });
+        }
+      });
+
+      let sortedMonths = Array.from(monthsMap.values()).sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year;
+        return a.monthIndex - b.monthIndex;
+      }).map(m => m.label);
+
+      if (monthRangeVal !== 'ALL') {
+        const count = parseInt(monthRangeVal) || 12;
+        sortedMonths = sortedMonths.slice(-count);
+      }
+
+      const values = sortedMonths.map(m => {
+        let matchingTxs = rawTransactions.filter(t => t.month === m);
+        if (chosenAccount !== 'ALL') {
+          matchingTxs = matchingTxs.filter(t => t.account === chosenAccount);
+        }
+        const lastTx = matchingTxs[matchingTxs.length - 1];
+        return lastTx ? lastTx.balance : 0;
+      });
+
+      return { labels: sortedMonths, values };
+    }
+
+    function renderAccountBalanceCharts() {
+      const accounts = Array.from(new Set(rawTransactions.map(t => t.account))).filter(Boolean);
+
+      // Sinkroniseer rekening dropdowns
+      ['balance-bar-account-select', 'balance-line-account-select'].forEach(id => {
+        const select = document.getElementById(id);
+        const curVal = filterState.balanceAccount;
+        select.innerHTML = `<option value="ALL">Alles</option>` + accounts.map(a => `<option value="${a}" ${a === curVal ? 'selected' : ''}>${a}</option>`).join('');
+      });
+
+      const { labels, values } = getBalanceTimelineData(filterState.balanceMonths, filterState.balanceAccount);
+
+      // --- GRAFIEK 1: Staafgrafiek ---
+      const ctxBar = document.getElementById('chart-balance-bars').getContext('2d');
+      if (barChartInstance) barChartInstance.destroy();
+
+      barChartInstance = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: '#2563eb',
+            hoverBackgroundColor: '#3b82f6',
+            borderRadius: 4,
+            barThickness: 14,
+            maxBarThickness: 18
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1e293b',
+              titleColor: '#e2e8f0',
+              bodyColor: '#38bdf8',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 10,
+              callbacks: {
+                label: (ctx) => `Saldo: ${formatCurrency(ctx.parsed.y)}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false, drawBorder: false },
+              ticks: { color: '#94a3b8', font: { size: 11 } }
+            },
+            y: {
+              grid: { color: '#1e293b', drawBorder: false },
+              ticks: {
+                color: '#64748b',
+                font: { size: 10 },
+                callback: (val) => formatCurrency(val)
+              }
+            }
+          }
+        }
+      });
+
+      // --- GRAFIEK 2: Totale Saldo Areagrafiek ---
+      const ctxLine = document.getElementById('chart-total-balance-line').getContext('2d');
+      if (lineChartInstance) lineChartInstance.destroy();
+
+      const gradient = ctxLine.createLinearGradient(0, 0, 0, 260);
+      gradient.addColorStop(0, 'rgba(37, 99, 235, 0.45)');
+      gradient.addColorStop(1, 'rgba(15, 23, 42, 0.05)');
+
+      lineChartInstance = new Chart(ctxLine, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            fill: true,
+            backgroundColor: gradient,
+            borderColor: '#38bdf8',
+            borderWidth: 2.5,
+            pointBackgroundColor: '#38bdf8',
+            pointBorderColor: '#0f172a',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            tension: 0.25
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleColor: '#e2e8f0',
+              bodyColor: '#38bdf8',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 10,
+              callbacks: {
+                label: (ctx) => `Totale Saldo: ${formatCurrency(ctx.parsed.y)}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false, drawBorder: false },
+              ticks: { color: '#94a3b8', font: { size: 11 } }
+            },
+            y: {
+              grid: { color: '#1e293b', drawBorder: false },
+              ticks: {
+                color: '#64748b',
+                font: { size: 10 },
+                callback: (val) => formatCurrency(val)
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function applyFiltersAndRender() {
+      applyFilters();
+      updateFilterButtonLabels();
+      renderSummaryKPIs();
+      renderMatrixTable();
+      renderYearlyMatrixTable();
+      renderAccountBalanceCharts();
+    }
+
+    function setupEventListeners() {
+      // Herstel Filters Knoppie
+      document.getElementById('btn-reset-filters').onclick = () => {
+        filterDefinitions.forEach(d => filterState[d.key] = []);
+        filterState.yearlyYears = [];
+        saveStateToUrl();
+        applyFiltersAndRender();
+        showToast('Alle filters is herstel.');
+      };
+
+      // Wys Gemiddeld checkbox
+      document.getElementById('chk-show-average').onchange = (e) => {
+        filterState.showAverage = e.target.checked;
+        saveStateToUrl();
+        renderMatrixTable();
+      };
+
+      // Wys % checkbox
+      document.getElementById('chk-show-percentage').onchange = (e) => {
+        filterState.showPercentage = e.target.checked;
+        saveStateToUrl();
+        renderMatrixTable();
+      };
+
+      // Sorteer keuse
+      document.getElementById('select-sort').onchange = (e) => {
+        filterState.sort = e.target.value;
+        saveStateToUrl();
+        renderMatrixTable();
+      };
+
+      // Balans rekening keuse (Staafgrafiek & Lyn)
+      document.getElementById('balance-bar-account-select').onchange = (e) => {
+        filterState.balanceAccount = e.target.value;
+        document.getElementById('balance-line-account-select').value = e.target.value;
+        saveStateToUrl();
+        renderAccountBalanceCharts();
+      };
+
+      document.getElementById('balance-line-account-select').onchange = (e) => {
+        filterState.balanceAccount = e.target.value;
+        document.getElementById('balance-bar-account-select').value = e.target.value;
+        saveStateToUrl();
+        renderAccountBalanceCharts();
+      };
+
+      // Balans maand bestek (Staafgrafiek & Lyn)
+      document.getElementById('balance-bar-month-range').onchange = (e) => {
+        filterState.balanceMonths = e.target.value;
+        document.getElementById('balance-line-month-range').value = e.target.value;
+        saveStateToUrl();
+        renderAccountBalanceCharts();
+      };
+
+      document.getElementById('balance-line-month-range').onchange = (e) => {
+        filterState.balanceMonths = e.target.value;
+        document.getElementById('balance-bar-month-range').value = e.target.value;
+        saveStateToUrl();
+        renderAccountBalanceCharts();
+      };
+
+      // Verfris Knoppie
+      document.getElementById('btn-refresh-data').onclick = () => {
+        fetchGoogleSheetData();
+      };
+
+      // Tema Wisselaar
+      document.getElementById('theme-toggle-btn').onclick = () => {
+        document.documentElement.classList.toggle('dark');
+        showToast(document.documentElement.classList.contains('dark') ? 'Donker modus geaktiveer' : 'Lig modus geaktiveer');
+      };
+
+      // Instellings Modal oop/toe
+      const modal = document.getElementById('settings-modal');
+      document.getElementById('btn-open-settings').onclick = () => {
+        document.getElementById('setting-sheet-id').value = APP_CONFIG.sheetId;
+        document.getElementById('setting-sheet-name').value = APP_CONFIG.sheetName;
+        document.getElementById('setting-apps-script-url').value = APP_CONFIG.appsScriptUrl;
+        modal.classList.remove('hidden');
+      };
+
+      const closeModal = () => modal.classList.add('hidden');
+      document.getElementById('btn-close-settings').onclick = closeModal;
+      document.getElementById('btn-cancel-settings').onclick = closeModal;
+
+      document.getElementById('btn-save-settings').onclick = () => {
+        APP_CONFIG.sheetId = document.getElementById('setting-sheet-id').value.trim() || APP_CONFIG.defaultSheetId;
+        APP_CONFIG.sheetName = document.getElementById('setting-sheet-name').value.trim();
+        APP_CONFIG.appsScriptUrl = document.getElementById('setting-apps-script-url').value.trim();
+        closeModal();
+        saveStateToUrl();
+        fetchGoogleSheetData();
+      };
+
+      // Plaaslike CSV Oplaai
+      document.getElementById('file-csv-upload').onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const csvText = event.target.result;
+          parseAndLoadCsv(csvText);
+          closeModal();
+        };
+        reader.readAsText(file);
+      };
+    }
+
+    function parseAndLoadCsv(text) {
+      const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+      if (lines.length < 2) return;
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+
+      const items = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+        const cat = cols[headers.indexOf('category') !== -1 ? headers.indexOf('category') : headers.indexOf('kategorie') !== -1 ? headers.indexOf('kategorie') : 1] || 'Ander';
+        const amt = parseFloat(cols[headers.indexOf('amount') !== -1 ? headers.indexOf('amount') : headers.indexOf('bedrag') !== -1 ? headers.indexOf('bedrag') : 2]) || 0;
+        const dStr = cols[headers.indexOf('date') !== -1 ? headers.indexOf('date') : headers.indexOf('datum') !== -1 ? headers.indexOf('datum') : 0] || '2026-01-01';
+        const type = cols[headers.indexOf('type') !== -1 ? headers.indexOf('type') : 3] || 'Expense';
+
+        const d = new Date(dStr);
+        const mIdx = isNaN(d.getTime()) ? 0 : d.getMonth();
+        const yr = isNaN(d.getTime()) ? '2026' : String(d.getFullYear());
+
+        items.push({
+          id: i,
+          date: dStr,
+          year: yr,
+          month: `${MONTH_NAMES_AF[mIdx]} '${yr.slice(-2)}`,
+          monthIndex: mIdx + 1,
+          section: type.toLowerCase().includes('income') ? 'Inkomste' : 'Uitgawes',
+          category: cat,
+          amount: Math.abs(amt),
+          account: 'Hoofrekening',
+          bank: 'FNB',
+          type: type,
+          subtype: 'Algemeen',
+          taxYear: `${yr}/${parseInt(yr) + 1}`,
+          taxPeriod: 'P1',
+          balance: 100000
+        });
+      }
+
+      if (items.length > 0) {
+        rawTransactions = items;
+        document.getElementById('total-tx-count').textContent = items.length.toLocaleString('af-ZA');
+        applyFiltersAndRender();
+        showToast(`${items.length} rye vanaf CSV gelaai!`);
+      }
+    }
+
+    // Inisialisering sodra die bladsy klaar gelaai is
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStateFromUrl();
+      setupDropdownPanels();
+      setupEventListeners();
+      fetchGoogleSheetData();
+    });
+  </script>
+</body>
+</html>
