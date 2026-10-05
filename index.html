@@ -220,6 +220,28 @@
       </div>
     </section>
 
+    <!-- Google Sheet Status / Waarskuwing Balkie -->
+    <div id="connection-status-banner" class="hidden bg-amber-950/40 border border-amber-800/70 rounded-xl p-3 sm:p-4 text-xs sm:text-sm text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+      <div class="flex items-start gap-2.5">
+        <span class="text-lg">⚠️</span>
+        <div>
+          <span class="font-bold text-amber-300" id="banner-status-title">Google Sheet nie publiek toeganklik nie</span>
+          <p class="text-amber-300/80 text-xs mt-0.5" id="banner-status-desc">
+            Om jou 10 568 transaksies lewendig te laai: Maak jou Google Sheet oop > <strong>Share</strong> > stel op <em>"Anyone with the link can view"</em>.
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <button id="btn-banner-settings" class="px-3 py-1.5 bg-amber-800/60 hover:bg-amber-700 text-amber-100 rounded-lg text-xs font-medium transition">
+          Instellings
+        </button>
+        <label class="cursor-pointer px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition inline-flex items-center gap-1 shadow-sm">
+          <span>Laai CSV Lêer</span>
+          <input type="file" id="banner-csv-upload" accept=".csv" class="hidden">
+        </label>
+      </div>
+    </div>
+
     <!-- Sleutel Syfers (KPI Kaarte) -->
     <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <!-- Totale inkomste -->
@@ -261,11 +283,29 @@
 
     <!-- Hoof Matriks Tabel: Inkomste & Uitgawes per maand -->
     <section class="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden shadow-xl">
-      <div class="p-4 sm:p-5 border-b border-slate-800/80">
-        <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Inkomste & uitgawes per maand</h2>
-        <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
-          Elke kolom is een gekose maand. Skakel kategorieë, jare, maande of rekeninge in die filters hierbo aan of af om die tabel te verander.
-        </p>
+      <div class="p-4 sm:p-5 border-b border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Inkomste & uitgawes per maand</h2>
+          <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+            Kliek op enige kategorie (bv. <strong>▸ Income</strong> of <strong>▸ Expense</strong>) om die onderliggende sub-tipes oop te vou.
+          </p>
+        </div>
+
+        <!-- Toegewyde Jaar Kieser vir Maandelikse Tabel -->
+        <div class="flex items-center gap-2 self-start md:self-auto bg-slate-800/90 border border-slate-700 px-3 py-1.5 rounded-lg shadow-sm">
+          <label for="monthly-year-select" class="text-xs font-semibold text-slate-300 whitespace-nowrap flex items-center gap-1">
+            <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <span>Kies Jaar vir Maande:</span>
+          </label>
+          <select id="monthly-year-select" class="bg-slate-900 text-blue-400 font-bold border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-blue-500">
+            <option value="2026" selected>2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+            <option value="2022">2022</option>
+            <option value="ALL">Alle Jare</option>
+          </select>
+        </div>
       </div>
 
       <!-- Tabel Rol area -->
@@ -476,6 +516,9 @@
     let rawTransactions = [];
     let filteredTransactions = [];
 
+    let expandedCategories = new Set();
+    let expandedYearlyCategories = new Set();
+
     // Filter toestand wat behou word
     let filterState = {
       category: [],
@@ -487,6 +530,7 @@
       subtype: [],
       taxYear: [],
       taxPeriod: [],
+      monthlyYear: '2026', // Toegewyde jaar vir maandelikse tabel
       yearlyYears: [], // Aparte jaar-keuse vir die jaarlikse tabel
       showAverage: true,
       showPercentage: true,
@@ -528,6 +572,7 @@
           st: filterState.subtype,
           ty: filterState.taxYear,
           tp: filterState.taxPeriod,
+          my: filterState.monthlyYear,
           yy: filterState.yearlyYears,
           avg: filterState.showAverage ? 1 : 0,
           pct: filterState.showPercentage ? 1 : 0,
@@ -559,6 +604,7 @@
         if (decoded.st) filterState.subtype = decoded.st;
         if (decoded.ty) filterState.taxYear = decoded.ty;
         if (decoded.tp) filterState.taxPeriod = decoded.tp;
+        if (decoded.my) filterState.monthlyYear = decoded.my;
         if (decoded.yy) filterState.yearlyYears = decoded.yy;
         if (decoded.avg !== undefined) filterState.showAverage = decoded.avg === 1;
         if (decoded.pct !== undefined) filterState.showPercentage = decoded.pct === 1;
@@ -568,70 +614,116 @@
         if (decoded.sid) APP_CONFIG.sheetId = decoded.sid;
         if (decoded.sn) APP_CONFIG.sheetName = decoded.sn;
 
-        // Pas checkboxes en select aan by herstel
+        // Pas kontroles aan by herstel
         document.getElementById('chk-show-average').checked = filterState.showAverage;
         document.getElementById('chk-show-percentage').checked = filterState.showPercentage;
         document.getElementById('select-sort').value = filterState.sort;
         document.getElementById('balance-bar-month-range').value = filterState.balanceMonths;
         document.getElementById('balance-line-month-range').value = filterState.balanceMonths;
+        if (document.getElementById('monthly-year-select')) {
+          document.getElementById('monthly-year-select').value = filterState.monthlyYear;
+        }
       } catch (err) {
         console.warn('Kon nie URL toestand laai nie:', err);
       }
     }
 
-    // Genereer die presiese data soos gesien in die skermkiekies (2018 - 2026)
     function generateScreenshotBaselineData() {
       const items = [];
       let txIdCounter = 1;
       let runningBalance = 11950000;
 
-      // Historiese jaarlikse data vir 2018-2025 soos op skermkiekie 2
+      // Historiese data vir 2018-2025 met sub-tipes insluitend Vakansie
       const historicalYears = [
         {
           year: '2018',
-          income: { 'Interest Income': 354222, 'Rente Inkomste': 450000 },
-          expense: {}
+          income: [
+            { cat: 'Interest Income', sub: 'Rente Belegging', val: 354222 },
+            { cat: 'Rente Inkomste', sub: 'Geldmark', val: 450000 }
+          ],
+          expense: []
         },
         {
           year: '2019',
-          income: { 'Interest Income': 360684 },
-          expense: {}
+          income: [{ cat: 'Interest Income', sub: 'Rente Belegging', val: 360684 }],
+          expense: []
         },
         {
           year: '2020',
-          income: { 'Interest Income': 199549 },
-          expense: {}
+          income: [{ cat: 'Interest Income', sub: 'Rente Belegging', val: 199549 }],
+          expense: []
         },
         {
           year: '2021',
-          income: { 'Interest Income': 155338 },
-          expense: {}
+          income: [{ cat: 'Interest Income', sub: 'Rente Belegging', val: 155338 }],
+          expense: []
         },
         {
           year: '2022',
-          income: { 'Income': 1831757, 'Interest Income': 282826, 'Expense': 373544 },
-          expense: { 'Expense': 1443790, 'Kos': 152568, 'Bank-Koste': 11847, 'Ongekategoriseer': 3321 }
+          income: [
+            { cat: 'Income', sub: 'Salaris / Fooie', val: 1831757 },
+            { cat: 'Interest Income', sub: 'Rente Belegging', val: 282826 },
+            { cat: 'Expense', sub: 'Terugbetalings', val: 373544 }
+          ],
+          expense: [
+            { cat: 'Expense', sub: 'Vakansie', val: 184500 },
+            { cat: 'Expense', sub: 'Algemeen', val: 1259290 },
+            { cat: 'Kos', sub: 'Kruideniersware', val: 152568 },
+            { cat: 'Bank-Koste', sub: 'Diensfooie', val: 11847 },
+            { cat: 'Ongekategoriseer', sub: 'Diverse', val: 3321 }
+          ]
         },
         {
           year: '2023',
-          income: { 'Income': 1274871, 'Interest Income': 632123, 'Rente Inkomste': 605000, 'Expense': 18897, 'Bank-Koste': 100 },
-          expense: { 'Expense': 860081, 'Kos': 153475, 'Bank-Koste': 5446, 'Ongekategoriseer': 12193 }
+          income: [
+            { cat: 'Income', sub: 'Salaris / Fooie', val: 1274871 },
+            { cat: 'Interest Income', sub: 'Rente Belegging', val: 632123 },
+            { cat: 'Rente Inkomste', sub: 'Geldmark', val: 605000 },
+            { cat: 'Expense', sub: 'Krediete', val: 18897 },
+            { cat: 'Bank-Koste', sub: 'Rente ontvang', val: 100 }
+          ],
+          expense: [
+            { cat: 'Expense', sub: 'Vakansie', val: 215400 },
+            { cat: 'Expense', sub: 'Algemeen', val: 644681 },
+            { cat: 'Kos', sub: 'Kruideniersware', val: 153475 },
+            { cat: 'Bank-Koste', sub: 'Diensfooie', val: 5446 },
+            { cat: 'Ongekategoriseer', sub: 'Diverse', val: 12193 }
+          ]
         },
         {
           year: '2024',
-          income: { 'Income': 1149029, 'Interest Income': 697530, 'Rente Inkomste': 10332 },
-          expense: { 'Expense': 548426, 'Kos': 133176, 'AInvestment': 350000, 'Bank-Koste': 7986, 'Income': 818 }
+          income: [
+            { cat: 'Income', sub: 'Salaris / Fooie', val: 1149029 },
+            { cat: 'Interest Income', sub: 'Rente Belegging', val: 697530 },
+            { cat: 'Rente Inkomste', sub: 'Geldmark', val: 10332 }
+          ],
+          expense: [
+            { cat: 'Expense', sub: 'Vakansie', val: 165000 },
+            { cat: 'Expense', sub: 'Brandstof', val: 83426 },
+            { cat: 'Expense', sub: 'Onderhoud', val: 300000 },
+            { cat: 'Kos', sub: 'Kruideniersware', val: 133176 },
+            { cat: 'AInvestment', sub: 'Aandele', val: 350000 },
+            { cat: 'Bank-Koste', sub: 'Diensfooie', val: 7986 },
+            { cat: 'Income', sub: 'Koste regstelling', val: 818 }
+          ]
         },
         {
           year: '2025',
-          income: { 'Income': 1341337, 'Interest Income': 703401 },
-          expense: { 'Expense': 403420, 'Kos': 130704, 'Bank-Koste': 6274 }
+          income: [
+            { cat: 'Income', sub: 'Salaris / Fooie', val: 1341337 },
+            { cat: 'Interest Income', sub: 'Rente Belegging', val: 703401 }
+          ],
+          expense: [
+            { cat: 'Expense', sub: 'Vakansie', val: 124000 },
+            { cat: 'Expense', sub: 'Algemeen', val: 279420 },
+            { cat: 'Kos', sub: 'Kruideniersware', val: 130704 },
+            { cat: 'Bank-Koste', sub: 'Diensfooie', val: 6274 }
+          ]
         }
       ];
 
-      // Skep transaksies vir vorige jare
       historicalYears.forEach(hy => {
-        for (const [cat, val] of Object.entries(hy.income)) {
+        hy.income.forEach(item => {
           items.push({
             id: txIdCounter++,
             date: `${hy.year}-06-15`,
@@ -639,18 +731,18 @@
             month: `Jun '${hy.year.slice(-2)}`,
             monthIndex: 6,
             section: 'Inkomste',
-            category: cat,
-            amount: val,
+            category: item.cat,
+            subtype: item.sub,
+            amount: item.val,
             account: 'Tjekrekening',
             bank: 'FNB',
             type: 'Income',
-            subtype: cat === 'Interest Income' || cat === 'Rente Inkomste' ? 'Interest' : 'General',
             taxYear: `${hy.year}/${parseInt(hy.year) + 1}`,
             taxPeriod: 'P1',
             balance: runningBalance
           });
-        }
-        for (const [cat, val] of Object.entries(hy.expense)) {
+        });
+        hy.expense.forEach(item => {
           items.push({
             id: txIdCounter++,
             date: `${hy.year}-06-20`,
@@ -658,23 +750,21 @@
             month: `Jun '${hy.year.slice(-2)}`,
             monthIndex: 6,
             section: 'Uitgawes',
-            category: cat,
-            amount: val,
+            category: item.cat,
+            subtype: item.sub,
+            amount: item.val,
             account: 'Kredietkaart',
             bank: 'FNB',
             type: 'Expense',
-            subtype: 'General',
             taxYear: `${hy.year}/${parseInt(hy.year) + 1}`,
             taxPeriod: 'P1',
             balance: runningBalance
           });
-        }
+        });
       });
 
-      // 2025/2026 Maandelikse data soos gesien op skermkiekie 1 & 2
-      const months = [
-        { label: "Nov '25", m: 11, y: 2025, bal: 11985400 },
-        { label: "Des '25", m: 12, y: 2025, bal: 11990629 },
+      // 2026 Maande met gedetailleerde Sub-tipes soos Vakansie, Brandstof ens.
+      const months2026 = [
         { label: "Jan '26", m: 1, y: 2026, bal: 12050000 },
         { label: "Feb '26", m: 2, y: 2026, bal: 12010000 },
         { label: "Mrt '26", m: 3, y: 2026, bal: 12030000 },
@@ -687,23 +777,24 @@
         { label: "Okt '26", m: 10, y: 2026, bal: 12150000 }
       ];
 
-      const income2026 = {
-        'Income': [0, 0, 132494, 50377, 59338, 53697, 249011, 46891, 96894, 27428, 28307, 0],
-        'Interest Income': [0, 0, 64036, 62010, 56842, 61648, 61953, 62907, 62621, 65028, 64541, 54879],
-        'Dividends': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 148, 0]
-      };
+      const incData = [
+        { cat: 'Income', sub: 'Salaris / Fooie', vals: [132494, 50377, 59338, 53697, 249011, 46891, 96894, 27428, 28307, 0] },
+        { cat: 'Interest Income', sub: 'Rente Belegging', vals: [64036, 62010, 56842, 61648, 61953, 62907, 62621, 65028, 64541, 54879] },
+        { cat: 'Dividends', sub: 'Aandeel Dividende', vals: [0, 0, 0, 0, 0, 0, 0, 0, 148, 0] }
+      ];
 
-      const expense2026 = {
-        'Expense': [0, 0, 14561, 60386, 22623, 19887, 29261, 77269, 16729, 13865, 17560, 6021],
-        'Kos': [0, 0, 13159, 8002, 13159, 13047, 12013, 10160, 8883, 9732, 10351, 4321],
-        'Bank-Koste': [0, 0, 166, 185, 212, 182, 193, 199, 183, 663, 417, 85]
-      };
+      const expData = [
+        { cat: 'Expense', sub: 'Vakansie', vals: [5000, 25000, 8000, 4500, 12000, 42000, 5000, 3500, 6500, 1200] },
+        { cat: 'Expense', sub: 'Brandstof', vals: [4561, 15386, 7623, 8387, 9261, 18269, 6729, 5365, 6060, 2821] },
+        { cat: 'Expense', sub: 'Algemene Dienste', vals: [5000, 20000, 7000, 7000, 8000, 17000, 5000, 5000, 5000, 2000] },
+        { cat: 'Kos', sub: 'Kruideniersware', vals: [9159, 5502, 9159, 9047, 8513, 7160, 6083, 6732, 7351, 3121] },
+        { cat: 'Kos', sub: 'Restaurante / Wegneem', vals: [4000, 2500, 4000, 4000, 3500, 3000, 2800, 3000, 3000, 1200] },
+        { cat: 'Bank-Koste', sub: 'Kaart- & Rekeningfooie', vals: [166, 185, 212, 182, 193, 199, 183, 663, 417, 85] }
+      ];
 
-      months.forEach((mo, idx) => {
-        runningBalance = mo.bal;
-
-        for (const [cat, vals] of Object.entries(income2026)) {
-          const val = vals[idx] || 0;
+      months2026.forEach((mo, idx) => {
+        incData.forEach(item => {
+          const val = item.vals[idx];
           if (val > 0) {
             items.push({
               id: txIdCounter++,
@@ -712,21 +803,21 @@
               month: mo.label,
               monthIndex: mo.m,
               section: 'Inkomste',
-              category: cat,
+              category: item.cat,
+              subtype: item.sub,
               amount: val,
               account: 'Tjekrekening',
               bank: 'FNB',
               type: 'Income',
-              subtype: cat === 'Dividends' ? 'Investment' : 'Salary/Interest',
               taxYear: `${mo.y}/${mo.y + 1}`,
               taxPeriod: mo.m <= 2 ? 'P1' : 'P2',
-              balance: runningBalance
+              balance: mo.bal
             });
           }
-        }
+        });
 
-        for (const [cat, vals] of Object.entries(expense2026)) {
-          const val = vals[idx] || 0;
+        expData.forEach(item => {
+          const val = item.vals[idx];
           if (val > 0) {
             items.push({
               id: txIdCounter++,
@@ -735,21 +826,21 @@
               month: mo.label,
               monthIndex: mo.m,
               section: 'Uitgawes',
-              category: cat,
+              category: item.cat,
+              subtype: item.sub,
               amount: val,
-              account: cat === 'Bank-Koste' ? 'Tjekrekening' : 'Kredietkaart',
+              account: item.cat === 'Bank-Koste' ? 'Tjekrekening' : 'Kredietkaart',
               bank: 'FNB',
               type: 'Expense',
-              subtype: cat === 'Kos' ? 'Groceries' : 'Living',
               taxYear: `${mo.y}/${mo.y + 1}`,
               taxPeriod: mo.m <= 2 ? 'P1' : 'P2',
-              balance: runningBalance
+              balance: mo.bal
             });
           }
-        }
+        });
       });
 
-      // Voeg ook die spesifieke oorvleuelende transaksie by (soos aangedui op skermkiekie 2)
+      // Oorvleuelende voorbeeld transaksie (Sheet ry 7803)
       items.push({
         id: 7803,
         date: '2024-03-10',
@@ -758,11 +849,11 @@
         monthIndex: 3,
         section: 'Uitgawes',
         category: 'Ander Inkomste',
+        subtype: 'Diverse Terugbetaling',
         amount: 818,
         account: 'Tjekrekening',
         bank: 'FNB',
         type: 'Expense',
-        subtype: 'Ander Inkomste',
         taxYear: '2024/2025',
         taxPeriod: 'P1',
         balance: 11990629
@@ -771,50 +862,91 @@
       return items;
     }
 
-    // Laai data van Google Sheet af
     async function fetchGoogleSheetData() {
       const spinner = document.getElementById('refresh-spinner');
-      spinner.classList.add('animate-spin');
+      if (spinner) spinner.classList.add('animate-spin');
+
+      // Kyk eers of ons reeds data in plaaslike berging het
+      try {
+        const cached = localStorage.getItem('fin_dashboard_data');
+        if (cached && rawTransactions.length === 0) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            rawTransactions = parsed;
+            document.getElementById('total-tx-count').textContent = rawTransactions.length.toLocaleString('af-ZA');
+            applyFiltersAndRender();
+          }
+        }
+      } catch (e) {
+        console.warn('Kon nie kas laai nie:', e);
+      }
 
       const sheetId = APP_CONFIG.sheetId.trim();
       const sheetName = encodeURIComponent(APP_CONFIG.sheetName.trim());
-      let url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
-      if (sheetName) {
-        url += `&sheet=${sheetName}`;
-      }
+      
+      // Probeer gviz met limit query
+      let url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&tq=select%20*`;
+      if (sheetName) url += `&sheet=${sheetName}`;
+
+      let loadedSuccessfully = false;
 
       try {
         const response = await fetch(url, { cache: 'no-store' });
-        if (!response.ok) throw new Error('Netwerk reaksie was nie ok nie');
-        const text = await response.text();
-
-        // GViz jsonp reaksie parsing
-        const jsonMatch = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
-        if (jsonMatch && jsonMatch[1]) {
-          const parsed = JSON.parse(jsonMatch[1]);
-          const parsedData = transformGVizToTransactions(parsed);
-          if (parsedData.length > 0) {
-            rawTransactions = parsedData;
-            document.getElementById('total-tx-count').textContent = rawTransactions.length.toLocaleString('af-ZA');
-            showToast(`${rawTransactions.length} transaksies suksesvol vanaf Google Sheet gelaai!`);
-            applyFiltersAndRender();
-            return;
+        if (response.ok) {
+          const text = await response.text();
+          const jsonMatch = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
+          if (jsonMatch && jsonMatch[1]) {
+            const parsed = JSON.parse(jsonMatch[1]);
+            const parsedData = transformGVizToTransactions(parsed);
+            if (parsedData.length > 0) {
+              rawTransactions = parsedData;
+              loadedSuccessfully = true;
+              try {
+                localStorage.setItem('fin_dashboard_data', JSON.stringify(rawTransactions));
+              } catch (e) {}
+              document.getElementById('total-tx-count').textContent = rawTransactions.length.toLocaleString('af-ZA');
+              document.getElementById('connection-status-banner').classList.add('hidden');
+              showToast(`${rawTransactions.length} transaksies suksesvol vanaf Google Sheet gelaai!`);
+              applyFiltersAndRender();
+            }
           }
         }
-        throw new Error('Geen geldige rye gevind nie');
       } catch (err) {
-        console.warn('Kon nie direk met Google Sheet verbind nie (waarskynlik privaat of CORS). Laai tans basislyn data:', err);
-        // Laai ingeboude datastel wat presies ooreenstem met die skermkiekie
-        rawTransactions = generateScreenshotBaselineData();
-        document.getElementById('total-tx-count').textContent = '10 568';
-        showToast('Basislyn data gelaai (Google Sheet vereis publieke kyk-regte of Apps Script).');
-        applyFiltersAndRender();
-      } finally {
-        spinner.classList.remove('animate-spin');
+        console.warn('GViz JSON poging het misluk:', err);
       }
+
+      // As GViz misluk, probeer CSV uitvoer
+      if (!loadedSuccessfully) {
+        try {
+          const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv${sheetName ? '&sheet=' + sheetName : ''}`;
+          const csvResp = await fetch(csvUrl, { cache: 'no-store' });
+          if (csvResp.ok) {
+            const csvText = await csvResp.text();
+            if (csvText && csvText.length > 50) {
+              parseAndLoadCsv(csvText, true);
+              loadedSuccessfully = true;
+            }
+          }
+        } catch (e) {
+          console.warn('CSV uitvoer poging het misluk:', e);
+        }
+      }
+
+      if (!loadedSuccessfully) {
+        // Wys status banner bo-aan sodat die gebruiker weet waarom dit basislyn wys
+        const banner = document.getElementById('connection-status-banner');
+        if (banner) banner.classList.remove('hidden');
+
+        if (rawTransactions.length === 0) {
+          rawTransactions = generateScreenshotBaselineData();
+          document.getElementById('total-tx-count').textContent = '10 568';
+          applyFiltersAndRender();
+        }
+      }
+
+      if (spinner) spinner.classList.remove('animate-spin');
     }
 
-    // Omskep GViz kolom/ry struktuur na gestandaardiseerde voorwerpe
     function transformGVizToTransactions(gviz) {
       if (!gviz || !gviz.table || !gviz.table.rows) return [];
       const cols = gviz.table.cols.map(c => (c.label || c.id || '').trim().toLowerCase());
@@ -825,15 +957,14 @@
         if (!r.c) return;
         const rowVals = r.c.map(cell => (cell ? (cell.v !== undefined ? cell.v : cell.f) : ''));
 
-        // Probeer kolomme identifiseer
-        const dateRaw = rowVals[cols.indexOf('datum') !== -1 ? cols.indexOf('datum') : cols.indexOf('date') !== -1 ? cols.indexOf('date') : 0];
-        const catRaw = rowVals[cols.indexOf('kategorie') !== -1 ? cols.indexOf('kategorie') : cols.indexOf('category') !== -1 ? cols.indexOf('category') : 1] || 'Onbekend';
-        const amtRaw = rowVals[cols.indexOf('bedrag') !== -1 ? cols.indexOf('bedrag') : cols.indexOf('amount') !== -1 ? cols.indexOf('amount') : 2] || 0;
-        const accRaw = rowVals[cols.indexOf('rekening') !== -1 ? cols.indexOf('rekening') : cols.indexOf('account') !== -1 ? cols.indexOf('account') : 3] || 'Hoofrekening';
-        const typeRaw = rowVals[cols.indexOf('tipe') !== -1 ? cols.indexOf('tipe') : cols.indexOf('type') !== -1 ? cols.indexOf('type') : 4] || 'Expense';
-        const subRaw = rowVals[cols.indexOf('sub tipe') !== -1 ? cols.indexOf('sub tipe') : cols.indexOf('subtype') !== -1 ? cols.indexOf('subtype') : 5] || 'Ander';
-        const bankRaw = rowVals[cols.indexOf('bank') !== -1 ? cols.indexOf('bank') : 6] || 'FNB';
-        const balRaw = rowVals[cols.indexOf('balans') !== -1 ? cols.indexOf('balans') : cols.indexOf('balance') !== -1 ? cols.indexOf('balance') : 7] || 0;
+        const dateRaw = rowVals[cols.findIndex(c => c.includes('dat')) !== -1 ? cols.findIndex(c => c.includes('dat')) : 0];
+        const catRaw = rowVals[cols.findIndex(c => c.includes('kat') || c.includes('cat')) !== -1 ? cols.findIndex(c => c.includes('kat') || c.includes('cat')) : 1] || 'Onbekend';
+        const amtRaw = rowVals[cols.findIndex(c => c.includes('bed') || c.includes('amou')) !== -1 ? cols.findIndex(c => c.includes('bed') || c.includes('amou')) : 2] || 0;
+        const accRaw = rowVals[cols.findIndex(c => c.includes('rek') || c.includes('acc')) !== -1 ? cols.findIndex(c => c.includes('rek') || c.includes('acc')) : 3] || 'Hoofrekening';
+        const typeRaw = rowVals[cols.findIndex(c => c.includes('tip') || c.includes('type')) !== -1 ? cols.findIndex(c => c.includes('tip') || c.includes('type')) : 4] || 'Expense';
+        const subRaw = rowVals[cols.findIndex(c => c.includes('sub') || c.includes('beskry') || c.includes('desc')) !== -1 ? cols.findIndex(c => c.includes('sub') || c.includes('beskry') || c.includes('desc')) : 5] || 'Algemeen';
+        const bankRaw = rowVals[cols.findIndex(c => c.includes('bank')) !== -1 ? cols.findIndex(c => c.includes('bank')) : 6] || 'FNB';
+        const balRaw = rowVals[cols.findIndex(c => c.includes('bal') || c.includes('sal')) !== -1 ? cols.findIndex(c => c.includes('bal') || c.includes('sal')) : 7] || 0;
 
         let numAmount = Math.abs(parseFloat(amtRaw) || 0);
         let d = new Date(dateRaw);
@@ -842,7 +973,6 @@
         const monthIdx = d.getMonth();
         const yearStr = String(d.getFullYear());
         const monthLabel = `${MONTH_NAMES_AF[monthIdx]} '${yearStr.slice(-2)}`;
-
         const isIncome = String(typeRaw).toLowerCase().includes('income') || String(typeRaw).toLowerCase().includes('inkomste');
 
         results.push({
@@ -852,12 +982,12 @@
           month: monthLabel,
           monthIndex: monthIdx + 1,
           section: isIncome ? 'Inkomste' : 'Uitgawes',
-          category: String(catRaw),
+          category: String(catRaw).trim(),
+          subtype: String(subRaw).trim(),
           amount: numAmount,
-          account: String(accRaw),
-          bank: String(bankRaw),
-          type: String(typeRaw),
-          subtype: String(subRaw),
+          account: String(accRaw).trim(),
+          bank: String(bankRaw).trim(),
+          type: String(typeRaw).trim(),
           taxYear: d.getMonth() >= 2 ? `${d.getFullYear()}/${d.getFullYear() + 1}` : `${d.getFullYear() - 1}/${d.getFullYear()}`,
           taxPeriod: d.getMonth() < 8 ? 'P1' : 'P2',
           balance: parseFloat(balRaw) || 0
@@ -1069,6 +1199,24 @@
       document.getElementById('kpi-net-bar').style.width = `${Math.min(100, Math.round((Math.max(0, netBalance) / maxVal) * 100))}%`;
     }
 
+    function toggleCategoryExpand(catName) {
+      if (expandedCategories.has(catName)) {
+        expandedCategories.delete(catName);
+      } else {
+        expandedCategories.add(catName);
+      }
+      renderMatrixTable();
+    }
+
+    function toggleYearlyCategoryExpand(catName) {
+      if (expandedYearlyCategories.has(catName)) {
+        expandedYearlyCategories.delete(catName);
+      } else {
+        expandedYearlyCategories.add(catName);
+      }
+      renderYearlyMatrixTable();
+    }
+
     function renderMatrixTable() {
       const headRow = document.getElementById('matrix-head-row');
       const tbody = document.getElementById('matrix-body');
@@ -1079,25 +1227,40 @@
         if (!monthsMap.has(t.month)) {
           monthsMap.set(t.month, {
             label: t.month,
-            year: parseInt(t.year) || 2026,
+            year: String(t.year),
             monthIndex: t.monthIndex || 1
           });
         }
       });
 
       // Sorteer maande
-      let sortedMonths = Array.from(monthsMap.values()).sort((a, b) => {
-        if (a.year !== b.year) return a.year - b.year;
+      let allSortedMonths = Array.from(monthsMap.values()).sort((a, b) => {
+        if (a.year !== b.year) return parseInt(a.year) - parseInt(b.year);
         return a.monthIndex - b.monthIndex;
-      }).map(m => m.label);
+      });
 
-      // As 'n spesifieke maand gekies is in filters, wys slegs daardie
+      // Werk die Jaar-kieser dropdown op met alle jare uit die data
+      const availableYears = Array.from(new Set(rawTransactions.map(t => String(t.year)))).filter(Boolean).sort().reverse();
+      const yearSelect = document.getElementById('monthly-year-select');
+      if (yearSelect && availableYears.length > 0) {
+        const curSelected = filterState.monthlyYear;
+        yearSelect.innerHTML = availableYears.map(y => `<option value="${y}" ${y === curSelected ? 'selected' : ''}>${y}</option>`).join('') + `<option value="ALL" ${curSelected === 'ALL' ? 'selected' : ''}>Alle Jare</option>`;
+      }
+
+      // Filtreer maande volgens die gekose jaar vir hierdie tabel
+      let displayMonths = allSortedMonths;
+      if (filterState.monthlyYear && filterState.monthlyYear !== 'ALL') {
+        displayMonths = displayMonths.filter(m => m.year === filterState.monthlyYear);
+      }
+
+      // As die gebruiker ook die Maand-filter gebruik het
+      let sortedMonths = displayMonths.map(m => m.label);
       if (filterState.month.length > 0 && !filterState.month.includes('__NONE__')) {
         sortedMonths = sortedMonths.filter(m => filterState.month.includes(m));
       }
 
       // Bou tabel headers
-      let headHTML = `<th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[200px] border-r border-slate-700">Kategorie</th>`;
+      let headHTML = `<th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[210px] border-r border-slate-700">Kategorie (Kliek vir Sub-tipes)</th>`;
       sortedMonths.forEach(m => {
         headHTML += `<th class="py-3 px-3 text-right whitespace-nowrap">${m}</th>`;
       });
@@ -1111,7 +1274,7 @@
       }
       headRow.innerHTML = headHTML;
 
-      // Groepeer data volgens Inkomste en Uitgawes
+      // Groepeer data volgens Inkomste en Uitgawes, asook Sub-tipes
       const incomeMap = {};
       const expenseMap = {};
       const monthlyTotalIncome = {};
@@ -1126,15 +1289,23 @@
         const isInc = t.section === 'Inkomste';
         const targetMap = isInc ? incomeMap : expenseMap;
         const totalTarget = isInc ? monthlyTotalIncome : monthlyTotalExpense;
+        const sub = t.subtype || 'Algemeen';
 
         if (!targetMap[t.category]) {
-          targetMap[t.category] = { total: 0, byMonth: {} };
+          targetMap[t.category] = { total: 0, byMonth: {}, subtypes: {} };
           sortedMonths.forEach(m => targetMap[t.category].byMonth[m] = 0);
+        }
+
+        if (!targetMap[t.category].subtypes[sub]) {
+          targetMap[t.category].subtypes[sub] = { total: 0, byMonth: {} };
+          sortedMonths.forEach(m => targetMap[t.category].subtypes[sub].byMonth[m] = 0);
         }
 
         if (sortedMonths.includes(t.month)) {
           targetMap[t.category].byMonth[t.month] += t.amount;
           targetMap[t.category].total += t.amount;
+          targetMap[t.category].subtypes[sub].byMonth[t.month] += t.amount;
+          targetMap[t.category].subtypes[sub].total += t.amount;
           totalTarget[t.month] += t.amount;
         }
       });
@@ -1177,12 +1348,15 @@
       sortedIncomeCats.forEach(([catName, data]) => {
         const avg = data.total / monthCount;
         const pct = grandTotalIncome > 0 ? ((data.total / grandTotalIncome) * 100).toFixed(1) + '%' : '0.0%';
+        const isExpanded = expandedCategories.has(catName);
+        const subCount = Object.keys(data.subtypes).length;
 
         bodyHTML += `
-          <tr class="hover:bg-slate-800/40 transition">
+          <tr class="hover:bg-slate-800/50 cursor-pointer select-none transition border-b border-slate-800/40" onclick="toggleCategoryExpand('${encodeURIComponent(catName)}')">
             <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
-              <span class="text-slate-500 text-xs">▸</span>
-              <span>${catName}</span>
+              <span class="text-blue-400 text-xs font-bold transition-transform duration-150 inline-block w-4">${isExpanded ? '▼' : '▸'}</span>
+              <span class="font-semibold text-white">${catName}</span>
+              ${subCount > 0 ? `<span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded border border-slate-700">${subCount}</span>` : ''}
             </td>
             ${sortedMonths.map(m => {
               const val = data.byMonth[m] || 0;
@@ -1193,6 +1367,30 @@
             ${filterState.showPercentage ? `<td class="py-2.5 px-3 text-right text-slate-300 col-percentage bg-slate-800/30">${pct}</td>` : ''}
           </tr>
         `;
+
+        // Oopgevoude Sub-tipe rye
+        if (isExpanded) {
+          const sortedSubs = Object.entries(data.subtypes).sort((a, b) => b[1].total - a[1].total);
+          sortedSubs.forEach(([subName, sData]) => {
+            const sAvg = sData.total / monthCount;
+            const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
+            bodyHTML += `
+              <tr class="bg-blue-950/15 hover:bg-blue-950/25 text-slate-300 text-xs border-b border-slate-800/30">
+                <td class="py-2 pl-9 pr-4 sticky left-0 bg-[#0a101d] border-r border-slate-800 text-slate-300 flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-blue-400/80"></span>
+                  <span class="truncate" title="${subName}">${subName}</span>
+                </td>
+                ${sortedMonths.map(m => {
+                  const val = sData.byMonth[m] || 0;
+                  return `<td class="py-2 px-3 text-right ${val > 0 ? 'text-emerald-300/90' : 'text-slate-700'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
+                }).join('')}
+                <td class="py-2 px-3 text-right font-medium text-emerald-400/90 bg-slate-800/20">${formatCurrency(sData.total)}</td>
+                ${filterState.showAverage ? `<td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${formatCurrency(sAvg)}</td>` : ''}
+                ${filterState.showPercentage ? `<td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${sPct}</td>` : ''}
+              </tr>
+            `;
+          });
+        }
       });
 
       // Totaal Inkomste Ry
@@ -1220,12 +1418,15 @@
       sortedExpenseCats.forEach(([catName, data]) => {
         const avg = data.total / monthCount;
         const pct = grandTotalExpense > 0 ? ((data.total / grandTotalExpense) * 100).toFixed(1) + '%' : '0.0%';
+        const isExpanded = expandedCategories.has(catName);
+        const subCount = Object.keys(data.subtypes).length;
 
         bodyHTML += `
-          <tr class="hover:bg-slate-800/40 transition">
+          <tr class="hover:bg-slate-800/50 cursor-pointer select-none transition border-b border-slate-800/40" onclick="toggleCategoryExpand('${encodeURIComponent(catName)}')">
             <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
-              <span class="text-slate-500 text-xs">▸</span>
-              <span>${catName}</span>
+              <span class="text-rose-400 text-xs font-bold transition-transform duration-150 inline-block w-4">${isExpanded ? '▼' : '▸'}</span>
+              <span class="font-semibold text-white">${catName}</span>
+              ${subCount > 0 ? `<span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded border border-slate-700">${subCount}</span>` : ''}
             </td>
             ${sortedMonths.map(m => {
               const val = data.byMonth[m] || 0;
@@ -1236,6 +1437,30 @@
             ${filterState.showPercentage ? `<td class="py-2.5 px-3 text-right text-slate-300 col-percentage bg-slate-800/30">${pct}</td>` : ''}
           </tr>
         `;
+
+        // Oopgevoude Sub-tipe rye vir Uitgawes (bv. Vakansie, Kos ens.)
+        if (isExpanded) {
+          const sortedSubs = Object.entries(data.subtypes).sort((a, b) => b[1].total - a[1].total);
+          sortedSubs.forEach(([subName, sData]) => {
+            const sAvg = sData.total / monthCount;
+            const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
+            bodyHTML += `
+              <tr class="bg-rose-950/15 hover:bg-rose-950/25 text-slate-300 text-xs border-b border-slate-800/30">
+                <td class="py-2 pl-9 pr-4 sticky left-0 bg-[#160c12] border-r border-slate-800 text-slate-300 flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-400/80"></span>
+                  <span class="truncate" title="${subName}">${subName}</span>
+                </td>
+                ${sortedMonths.map(m => {
+                  const val = sData.byMonth[m] || 0;
+                  return `<td class="py-2 px-3 text-right ${val > 0 ? 'text-slate-300' : 'text-slate-700'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
+                }).join('')}
+                <td class="py-2 px-3 text-right font-medium text-rose-300/90 bg-slate-800/20">${formatCurrency(sData.total)}</td>
+                ${filterState.showAverage ? `<td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${formatCurrency(sAvg)}</td>` : ''}
+                ${filterState.showPercentage ? `<td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${sPct}</td>` : ''}
+              </tr>
+            `;
+          });
+        }
       });
 
       // Totaal Uitgawes Ry
@@ -1276,18 +1501,16 @@
       const warningBox = document.getElementById('overlap-warning-box');
       const warningList = document.getElementById('overlap-warning-list');
 
-      // Bepaal alle unieke jare
-      const allYears = Array.from(new Set(rawTransactions.map(t => t.year))).filter(Boolean).sort();
+      const allYears = Array.from(new Set(rawTransactions.map(t => String(t.year)))).filter(Boolean).sort();
       let activeYears = allYears;
 
       if (filterState.yearlyYears && filterState.yearlyYears.length > 0 && !filterState.yearlyYears.includes('__NONE__')) {
         activeYears = allYears.filter(y => filterState.yearlyYears.includes(y));
       }
 
-      // Pas alle hooffilters toe BEHALWE die jaarfilter
       const yearlyFilteredTransactions = rawTransactions.filter(item => {
         for (const def of filterDefinitions) {
-          if (def.key === 'year') continue; // Ignoreer hoofjaar filter soos gespesifiseer
+          if (def.key === 'year') continue;
           const selected = filterState[def.key];
           if (selected && selected.length > 0) {
             if (selected.includes('__NONE__')) return false;
@@ -1297,7 +1520,6 @@
         return activeYears.includes(item.year);
       });
 
-      // Kontroleer vir oorvleuelende kategorieë (kategorieë wat in beide Inkomste en Uitgawes voorkom)
       const incomeCatSet = new Set();
       const expenseCatSet = new Set();
       yearlyFilteredTransactions.forEach(t => {
@@ -1318,8 +1540,7 @@
         warningBox.classList.add('hidden');
       }
 
-      // Bou Tabel Headers
-      let headHTML = `<th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[200px] border-r border-slate-700">Kategorie</th>`;
+      let headHTML = `<th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[210px] border-r border-slate-700">Kategorie (Kliek vir Sub-tipes)</th>`;
       activeYears.forEach(y => {
         headHTML += `<th class="py-3 px-3 text-right whitespace-nowrap">${y}</th>`;
       });
@@ -1328,7 +1549,6 @@
       headHTML += `<th class="py-3 px-3 text-right font-bold bg-slate-800/60">%</th>`;
       headRow.innerHTML = headHTML;
 
-      // Groepeer data
       const incomeMap = {};
       const expenseMap = {};
       const yearlyTotalIncome = {};
@@ -1343,15 +1563,23 @@
         const isInc = t.section === 'Inkomste';
         const targetMap = isInc ? incomeMap : expenseMap;
         const totalTarget = isInc ? yearlyTotalIncome : yearlyTotalExpense;
+        const sub = t.subtype || 'Algemeen';
 
         if (!targetMap[t.category]) {
-          targetMap[t.category] = { total: 0, byYear: {} };
+          targetMap[t.category] = { total: 0, byYear: {}, subtypes: {} };
           activeYears.forEach(y => targetMap[t.category].byYear[y] = 0);
+        }
+
+        if (!targetMap[t.category].subtypes[sub]) {
+          targetMap[t.category].subtypes[sub] = { total: 0, byYear: {} };
+          activeYears.forEach(y => targetMap[t.category].subtypes[sub].byYear[y] = 0);
         }
 
         if (activeYears.includes(t.year)) {
           targetMap[t.category].byYear[t.year] += t.amount;
           targetMap[t.category].total += t.amount;
+          targetMap[t.category].subtypes[sub].byYear[t.year] += t.amount;
+          targetMap[t.category].subtypes[sub].total += t.amount;
           totalTarget[t.year] += t.amount;
         }
       });
@@ -1378,12 +1606,15 @@
       sortedIncomeCats.forEach(([catName, data]) => {
         const avg = data.total / yearCount;
         const pct = grandTotalIncome > 0 ? ((data.total / grandTotalIncome) * 100).toFixed(1) + '%' : '0.0%';
+        const isExpanded = expandedYearlyCategories.has(catName);
+        const subCount = Object.keys(data.subtypes).length;
 
         bodyHTML += `
-          <tr class="hover:bg-slate-800/40 transition">
+          <tr class="hover:bg-slate-800/50 cursor-pointer select-none transition border-b border-slate-800/40" onclick="toggleYearlyCategoryExpand('${encodeURIComponent(catName)}')">
             <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
-              <span class="text-slate-500 text-xs">▸</span>
-              <span>${catName}</span>
+              <span class="text-blue-400 text-xs font-bold transition-transform duration-150 inline-block w-4">${isExpanded ? '▼' : '▸'}</span>
+              <span class="font-semibold text-white">${catName}</span>
+              ${subCount > 0 ? `<span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded border border-slate-700">${subCount}</span>` : ''}
             </td>
             ${activeYears.map(y => {
               const val = data.byYear[y] || 0;
@@ -1394,6 +1625,29 @@
             <td class="py-2.5 px-3 text-right text-slate-300 bg-slate-800/30">${pct}</td>
           </tr>
         `;
+
+        if (isExpanded) {
+          const sortedSubs = Object.entries(data.subtypes).sort((a, b) => b[1].total - a[1].total);
+          sortedSubs.forEach(([subName, sData]) => {
+            const sAvg = sData.total / yearCount;
+            const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
+            bodyHTML += `
+              <tr class="bg-blue-950/15 hover:bg-blue-950/25 text-slate-300 text-xs border-b border-slate-800/30">
+                <td class="py-2 pl-9 pr-4 sticky left-0 bg-[#0a101d] border-r border-slate-800 text-slate-300 flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-blue-400/80"></span>
+                  <span class="truncate" title="${subName}">${subName}</span>
+                </td>
+                ${activeYears.map(y => {
+                  const val = sData.byYear[y] || 0;
+                  return `<td class="py-2 px-3 text-right ${val > 0 ? 'text-emerald-300/90' : 'text-slate-700'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
+                }).join('')}
+                <td class="py-2 px-3 text-right font-medium text-emerald-400/90 bg-slate-800/20">${formatCurrency(sData.total)}</td>
+                <td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${formatCurrency(sAvg)}</td>
+                <td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${sPct}</td>
+              </tr>
+            `;
+          });
+        }
       });
 
       // Totaal Inkomste Ry
@@ -1421,12 +1675,15 @@
       sortedExpenseCats.forEach(([catName, data]) => {
         const avg = data.total / yearCount;
         const pct = grandTotalExpense > 0 ? ((data.total / grandTotalExpense) * 100).toFixed(1) + '%' : '0.0%';
+        const isExpanded = expandedYearlyCategories.has(catName);
+        const subCount = Object.keys(data.subtypes).length;
 
         bodyHTML += `
-          <tr class="hover:bg-slate-800/40 transition">
+          <tr class="hover:bg-slate-800/50 cursor-pointer select-none transition border-b border-slate-800/40" onclick="toggleYearlyCategoryExpand('${encodeURIComponent(catName)}')">
             <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
-              <span class="text-slate-500 text-xs">▸</span>
-              <span>${catName}</span>
+              <span class="text-rose-400 text-xs font-bold transition-transform duration-150 inline-block w-4">${isExpanded ? '▼' : '▸'}</span>
+              <span class="font-semibold text-white">${catName}</span>
+              ${subCount > 0 ? `<span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded border border-slate-700">${subCount}</span>` : ''}
             </td>
             ${activeYears.map(y => {
               const val = data.byYear[y] || 0;
@@ -1437,6 +1694,29 @@
             <td class="py-2.5 px-3 text-right text-slate-300 bg-slate-800/30">${pct}</td>
           </tr>
         `;
+
+        if (isExpanded) {
+          const sortedSubs = Object.entries(data.subtypes).sort((a, b) => b[1].total - a[1].total);
+          sortedSubs.forEach(([subName, sData]) => {
+            const sAvg = sData.total / yearCount;
+            const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
+            bodyHTML += `
+              <tr class="bg-rose-950/15 hover:bg-rose-950/25 text-slate-300 text-xs border-b border-slate-800/30">
+                <td class="py-2 pl-9 pr-4 sticky left-0 bg-[#160c12] border-r border-slate-800 text-slate-300 flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-400/80"></span>
+                  <span class="truncate" title="${subName}">${subName}</span>
+                </td>
+                ${activeYears.map(y => {
+                  const val = sData.byYear[y] || 0;
+                  return `<td class="py-2 px-3 text-right ${val > 0 ? 'text-slate-300' : 'text-slate-700'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
+                }).join('')}
+                <td class="py-2 px-3 text-right font-medium text-rose-300/90 bg-slate-800/20">${formatCurrency(sData.total)}</td>
+                <td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${formatCurrency(sAvg)}</td>
+                <td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${sPct}</td>
+              </tr>
+            `;
+          });
+        }
       });
 
       // Totaal Uitgawes Ry
@@ -1472,246 +1752,27 @@
       updateYearlyFilterPanel(allYears);
     }
 
-    function updateYearlyFilterPanel(allYears) {
-      const panel = document.getElementById('yearly-filter-panel');
-      const label = document.getElementById('yearly-filter-label');
-      const selected = filterState.yearlyYears || [];
-
-      if (!selected || selected.length === 0) {
-        label.textContent = 'Jaar: Alles';
-      } else if (selected.includes('__NONE__')) {
-        label.textContent = 'Jaar: 0 gekies';
-      } else {
-        label.textContent = `Jaar: ${selected.length} gekies`;
-      }
-
-      panel.innerHTML = `
-        <div class="space-y-2">
-          <div class="flex items-center justify-between text-[11px] text-blue-400 pb-1 border-b border-slate-800">
-            <button id="btn-yearly-select-all" class="hover:underline">Kies Alles</button>
-            <button id="btn-yearly-deselect-all" class="hover:underline text-slate-400">Maak Skoon</button>
-          </div>
-          <div class="max-h-48 overflow-y-auto space-y-1 text-xs">
-            ${allYears.map(y => `
-              <label class="flex items-center justify-between p-1 rounded hover:bg-slate-800/80 cursor-pointer text-slate-200">
-                <div class="flex items-center gap-2">
-                  <input type="checkbox" value="${y}" ${selected.length === 0 || selected.includes(y) ? 'checked' : ''} class="yearly-chk rounded text-blue-600 bg-slate-800 border-slate-700">
-                  <span>${y}</span>
-                </div>
-              </label>
-            `).join('')}
-          </div>
-        </div>
-      `;
-
-      const pBtn = document.getElementById('yearly-filter-btn');
-      pBtn.onclick = (e) => {
-        e.stopPropagation();
-        panel.classList.toggle('hidden');
-      };
-
-      panel.querySelector('#btn-yearly-select-all').onclick = () => {
-        filterState.yearlyYears = [];
-        saveStateToUrl();
-        renderYearlyMatrixTable();
-      };
-
-      panel.querySelector('#btn-yearly-deselect-all').onclick = () => {
-        filterState.yearlyYears = ['__NONE__'];
-        saveStateToUrl();
-        renderYearlyMatrixTable();
-      };
-
-      panel.querySelectorAll('.yearly-chk').forEach(chk => {
-        chk.onchange = () => {
-          const checked = Array.from(panel.querySelectorAll('.yearly-chk:checked')).map(c => c.value);
-          if (checked.length === allYears.length || checked.length === 0) {
-            filterState.yearlyYears = [];
-          } else {
-            filterState.yearlyYears = checked;
-          }
-          saveStateToUrl();
-          renderYearlyMatrixTable();
-        };
-      });
-    }
-
-    function getBalanceTimelineData(monthRangeVal, chosenAccount) {
-      const monthsMap = new Map();
-      rawTransactions.forEach(t => {
-        if (!monthsMap.has(t.month)) {
-          monthsMap.set(t.month, {
-            label: t.month,
-            year: parseInt(t.year) || 2026,
-            monthIndex: t.monthIndex || 1
-          });
-        }
-      });
-
-      let sortedMonths = Array.from(monthsMap.values()).sort((a, b) => {
-        if (a.year !== b.year) return a.year - b.year;
-        return a.monthIndex - b.monthIndex;
-      }).map(m => m.label);
-
-      if (monthRangeVal !== 'ALL') {
-        const count = parseInt(monthRangeVal) || 12;
-        sortedMonths = sortedMonths.slice(-count);
-      }
-
-      const values = sortedMonths.map(m => {
-        let matchingTxs = rawTransactions.filter(t => t.month === m);
-        if (chosenAccount !== 'ALL') {
-          matchingTxs = matchingTxs.filter(t => t.account === chosenAccount);
-        }
-        const lastTx = matchingTxs[matchingTxs.length - 1];
-        return lastTx ? lastTx.balance : 0;
-      });
-
-      return { labels: sortedMonths, values };
-    }
-
-    function renderAccountBalanceCharts() {
-      const accounts = Array.from(new Set(rawTransactions.map(t => t.account))).filter(Boolean);
-
-      // Sinkroniseer rekening dropdowns
-      ['balance-bar-account-select', 'balance-line-account-select'].forEach(id => {
-        const select = document.getElementById(id);
-        const curVal = filterState.balanceAccount;
-        select.innerHTML = `<option value="ALL">Alles</option>` + accounts.map(a => `<option value="${a}" ${a === curVal ? 'selected' : ''}>${a}</option>`).join('');
-      });
-
-      const { labels, values } = getBalanceTimelineData(filterState.balanceMonths, filterState.balanceAccount);
-
-      // --- GRAFIEK 1: Staafgrafiek ---
-      const ctxBar = document.getElementById('chart-balance-bars').getContext('2d');
-      if (barChartInstance) barChartInstance.destroy();
-
-      barChartInstance = new Chart(ctxBar, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            data: values,
-            backgroundColor: '#2563eb',
-            hoverBackgroundColor: '#3b82f6',
-            borderRadius: 4,
-            barThickness: 14,
-            maxBarThickness: 18
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: '#1e293b',
-              titleColor: '#e2e8f0',
-              bodyColor: '#38bdf8',
-              borderColor: '#334155',
-              borderWidth: 1,
-              padding: 10,
-              callbacks: {
-                label: (ctx) => `Saldo: ${formatCurrency(ctx.parsed.y)}`
-              }
-            }
-          },
-          scales: {
-            x: {
-              grid: { display: false, drawBorder: false },
-              ticks: { color: '#94a3b8', font: { size: 11 } }
-            },
-            y: {
-              grid: { color: '#1e293b', drawBorder: false },
-              ticks: {
-                color: '#64748b',
-                font: { size: 10 },
-                callback: (val) => formatCurrency(val)
-              }
-            }
-          }
-        }
-      });
-
-      // --- GRAFIEK 2: Totale Saldo Areagrafiek ---
-      const ctxLine = document.getElementById('chart-total-balance-line').getContext('2d');
-      if (lineChartInstance) lineChartInstance.destroy();
-
-      const gradient = ctxLine.createLinearGradient(0, 0, 0, 260);
-      gradient.addColorStop(0, 'rgba(37, 99, 235, 0.45)');
-      gradient.addColorStop(1, 'rgba(15, 23, 42, 0.05)');
-
-      lineChartInstance = new Chart(ctxLine, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            data: values,
-            fill: true,
-            backgroundColor: gradient,
-            borderColor: '#38bdf8',
-            borderWidth: 2.5,
-            pointBackgroundColor: '#38bdf8',
-            pointBorderColor: '#0f172a',
-            pointBorderWidth: 2,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            tension: 0.25
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: '#0f172a',
-              titleColor: '#e2e8f0',
-              bodyColor: '#38bdf8',
-              borderColor: '#334155',
-              borderWidth: 1,
-              padding: 10,
-              callbacks: {
-                label: (ctx) => `Totale Saldo: ${formatCurrency(ctx.parsed.y)}`
-              }
-            }
-          },
-          scales: {
-            x: {
-              grid: { display: false, drawBorder: false },
-              ticks: { color: '#94a3b8', font: { size: 11 } }
-            },
-            y: {
-              grid: { color: '#1e293b', drawBorder: false },
-              ticks: {
-                color: '#64748b',
-                font: { size: 10 },
-                callback: (val) => formatCurrency(val)
-              }
-            }
-          }
-        }
-      });
-    }
-
-    function applyFiltersAndRender() {
-      applyFilters();
-      updateFilterButtonLabels();
-      renderSummaryKPIs();
-      renderMatrixTable();
-      renderYearlyMatrixTable();
-      renderAccountBalanceCharts();
-    }
-
     function setupEventListeners() {
       // Herstel Filters Knoppie
       document.getElementById('btn-reset-filters').onclick = () => {
         filterDefinitions.forEach(d => filterState[d.key] = []);
         filterState.yearlyYears = [];
+        expandedCategories.clear();
+        expandedYearlyCategories.clear();
         saveStateToUrl();
         applyFiltersAndRender();
         showToast('Alle filters is herstel.');
       };
+
+      // Toegewyde Jaar Kieser vir Maandelikse Tabel
+      const monthlyYearSelect = document.getElementById('monthly-year-select');
+      if (monthlyYearSelect) {
+        monthlyYearSelect.onchange = (e) => {
+          filterState.monthlyYear = e.target.value;
+          saveStateToUrl();
+          renderMatrixTable();
+        };
+      }
 
       // Wys Gemiddeld checkbox
       document.getElementById('chk-show-average').onchange = (e) => {
@@ -1803,26 +1864,50 @@
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (event) => {
-          const csvText = event.target.result;
-          parseAndLoadCsv(csvText);
+          parseAndLoadCsv(event.target.result, false);
           closeModal();
         };
         reader.readAsText(file);
       };
+
+      const bannerUpload = document.getElementById('banner-csv-upload');
+      if (bannerUpload) {
+        bannerUpload.onchange = (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            parseAndLoadCsv(event.target.result, false);
+          };
+          reader.readAsText(file);
+        };
+      }
+
+      const bannerSettingsBtn = document.getElementById('btn-banner-settings');
+      if (bannerSettingsBtn) {
+        bannerSettingsBtn.onclick = () => {
+          document.getElementById('btn-open-settings').click();
+        };
+      }
     }
 
-    function parseAndLoadCsv(text) {
+    function parseAndLoadCsv(text, isAutoFetch = false) {
       const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
       if (lines.length < 2) return;
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
 
       const items = [];
       for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
-        const cat = cols[headers.indexOf('category') !== -1 ? headers.indexOf('category') : headers.indexOf('kategorie') !== -1 ? headers.indexOf('kategorie') : 1] || 'Ander';
-        const amt = parseFloat(cols[headers.indexOf('amount') !== -1 ? headers.indexOf('amount') : headers.indexOf('bedrag') !== -1 ? headers.indexOf('bedrag') : 2]) || 0;
-        const dStr = cols[headers.indexOf('date') !== -1 ? headers.indexOf('date') : headers.indexOf('datum') !== -1 ? headers.indexOf('datum') : 0] || '2026-01-01';
-        const type = cols[headers.indexOf('type') !== -1 ? headers.indexOf('type') : 3] || 'Expense';
+        // Hanteer kommas binne aanhalingstekens korrek
+        const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+        const dStr = cols[headers.findIndex(h => h.includes('dat')) !== -1 ? headers.findIndex(h => h.includes('dat')) : 0] || '2026-01-01';
+        const cat = cols[headers.findIndex(h => h.includes('kat') || h.includes('cat')) !== -1 ? headers.findIndex(h => h.includes('kat') || h.includes('cat')) : 1] || 'Ander';
+        const amt = parseFloat(cols[headers.findIndex(h => h.includes('bed') || h.includes('amou')) !== -1 ? headers.findIndex(h => h.includes('bed') || h.includes('amou')) : 2]) || 0;
+        const acc = cols[headers.findIndex(h => h.includes('rek') || h.includes('acc')) !== -1 ? headers.findIndex(h => h.includes('rek') || h.includes('acc')) : 3] || 'Hoofrekening';
+        const type = cols[headers.findIndex(h => h.includes('tip') || h.includes('type')) !== -1 ? headers.findIndex(h => h.includes('tip') || h.includes('type')) : 4] || 'Expense';
+        const sub = cols[headers.findIndex(h => h.includes('sub') || h.includes('beskry') || h.includes('desc')) !== -1 ? headers.findIndex(h => h.includes('sub') || h.includes('beskry') || h.includes('desc')) : 5] || 'Algemeen';
+        const bank = cols[headers.findIndex(h => h.includes('bank')) !== -1 ? headers.findIndex(h => h.includes('bank')) : 6] || 'FNB';
+        const bal = parseFloat(cols[headers.findIndex(h => h.includes('bal') || h.includes('sal')) !== -1 ? headers.findIndex(h => h.includes('bal') || h.includes('sal')) : 7]) || 0;
 
         const d = new Date(dStr);
         const mIdx = isNaN(d.getTime()) ? 0 : d.getMonth();
@@ -1834,24 +1919,30 @@
           year: yr,
           month: `${MONTH_NAMES_AF[mIdx]} '${yr.slice(-2)}`,
           monthIndex: mIdx + 1,
-          section: type.toLowerCase().includes('income') ? 'Inkomste' : 'Uitgawes',
+          section: type.toLowerCase().includes('income') || type.toLowerCase().includes('inkomste') ? 'Inkomste' : 'Uitgawes',
           category: cat,
+          subtype: sub,
           amount: Math.abs(amt),
-          account: 'Hoofrekening',
-          bank: 'FNB',
+          account: acc,
+          bank: bank,
           type: type,
-          subtype: 'Algemeen',
           taxYear: `${yr}/${parseInt(yr) + 1}`,
           taxPeriod: 'P1',
-          balance: 100000
+          balance: bal
         });
       }
 
       if (items.length > 0) {
         rawTransactions = items;
+        try {
+          localStorage.setItem('fin_dashboard_data', JSON.stringify(rawTransactions));
+        } catch (e) {}
         document.getElementById('total-tx-count').textContent = items.length.toLocaleString('af-ZA');
+        document.getElementById('connection-status-banner').classList.add('hidden');
         applyFiltersAndRender();
-        showToast(`${items.length} rye vanaf CSV gelaai!`);
+        if (!isAutoFetch) {
+          showToast(`${items.length} transaksies suksesvol gelaai en gestoor!`);
+        }
       }
     }
 
