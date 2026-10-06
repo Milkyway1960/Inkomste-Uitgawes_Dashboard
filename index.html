@@ -1,5 +1,5 @@
 <!-- Top Kopbalk -->
-<header class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+<header class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-slate-800">
   <div>
     <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
       <span>Inkomste &amp; Uitgawe Dashboard</span>
@@ -13,15 +13,15 @@
   <!-- Knoppies regs bo -->
   <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
     <!-- Tema Wisselaar -->
-    <button id="theme-toggle-btn" title="Skakel Donker/Lig modus" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <button id="theme-toggle-btn" title="Skakel Donker/Lig modus" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
       </svg>
     </button>
 
     <!-- Instellings Knoppie -->
-    <button id="btn-open-settings" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs sm:text-sm font-medium transition shadow-sm">
-      <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <button id="btn-open-settings" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs sm:text-sm font-medium transition shadow-sm">
+      <svg width="16" height="16" class="text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
       </svg>
@@ -29,8 +29,8 @@
     </button>
 
     <!-- Verfris Knoppie -->
-    <button id="btn-refresh-data" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/90 hover:bg-blue-600 text-white text-xs sm:text-sm font-medium transition shadow-sm">
-      <svg id="refresh-spinner" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <button id="btn-refresh-data" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-medium transition shadow-sm">
+      <svg id="refresh-spinner" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
       </svg>
       <span>Verfris Data</span>
@@ -39,92 +39,92 @@
 </header>
 
 <!-- Filter Paneel -->
-<section class="bg-slate-900/60 p-3 sm:p-4 rounded-xl border border-slate-800 space-y-3">
-  <!-- Dropdown Knoppies -->
+<section class="bg-slate-900/80 p-3 sm:p-4 rounded-xl border border-slate-800 space-y-3">
+  <!-- Reeks Dropdown Knoppies -->
   <div class="flex flex-wrap items-center gap-2" id="filter-buttons-container">
     <!-- Kategorie -->
     <div class="relative dropdown-parent" data-filter="category">
-      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm border border-slate-700">
         <span class="btn-label font-medium">Kategorie: Alles</span>
-        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        <svg width="14" height="14" class="text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </button>
       <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-64 sm:w-72 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
     </div>
 
     <!-- Jaar -->
     <div class="relative dropdown-parent" data-filter="year">
-      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm border border-slate-700">
         <span class="btn-label font-medium">Jaar: Alles</span>
-        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        <svg width="14" height="14" class="text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </button>
       <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
     </div>
 
     <!-- Maand -->
     <div class="relative dropdown-parent" data-filter="month">
-      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm border border-slate-700">
         <span class="btn-label font-medium">Maand: Alles</span>
-        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        <svg width="14" height="14" class="text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </button>
       <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
     </div>
 
     <!-- Rekening (ACC NAME) -->
     <div class="relative dropdown-parent" data-filter="account">
-      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm border border-slate-700">
         <span class="btn-label font-medium">Rekening: Alles</span>
-        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        <svg width="14" height="14" class="text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </button>
       <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
     </div>
 
     <!-- Bank -->
     <div class="relative dropdown-parent" data-filter="bank">
-      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm border border-slate-700">
         <span class="btn-label font-medium">Bank: Alles</span>
-        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        <svg width="14" height="14" class="text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </button>
       <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-60 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
     </div>
 
     <!-- Type -->
     <div class="relative dropdown-parent" data-filter="type">
-      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm border border-slate-700">
         <span class="btn-label font-medium">Type: Alles</span>
-        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        <svg width="14" height="14" class="text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </button>
       <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
     </div>
 
     <!-- Sub Type -->
     <div class="relative dropdown-parent" data-filter="subtype">
-      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm border border-slate-700">
         <span class="btn-label font-medium">Sub Type: Alles</span>
-        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        <svg width="14" height="14" class="text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </button>
       <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
     </div>
 
     <!-- Tax Year -->
     <div class="relative dropdown-parent" data-filter="taxYear">
-      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm border border-slate-700">
         <span class="btn-label font-medium">Tax Year: Alles</span>
-        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        <svg width="14" height="14" class="text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </button>
       <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
     </div>
 
     <!-- Tax Period -->
     <div class="relative dropdown-parent" data-filter="taxPeriod">
-      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm border border-slate-700">
         <span class="btn-label font-medium">Tax Period: Alles</span>
-        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        <svg width="14" height="14" class="text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </button>
       <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
     </div>
   </div>
 
-  <!-- Bykomende Beheer & Sortering -->
+  <!-- Bykomende Filter Beheer & Sortering -->
   <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/80 text-xs sm:text-sm">
     <div class="flex flex-wrap items-center gap-3 sm:gap-4">
       <button id="btn-reset-filters" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
@@ -154,14 +154,14 @@
   </div>
 </section>
 
-<!-- Google Sheet Status Waarskuwing -->
+<!-- Google Sheet Waarskuwingsbalkie indien nie publiek nie -->
 <div id="connection-status-banner" class="hidden bg-amber-950/40 border border-amber-800/70 rounded-xl p-3 sm:p-4 text-xs sm:text-sm text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
   <div class="flex items-start gap-2.5">
     <span class="text-lg">⚠️</span>
     <div>
       <span class="font-bold text-amber-300" id="banner-status-title">Google Sheet nie publiek toeganklik nie</span>
       <p class="text-amber-300/80 text-xs mt-0.5" id="banner-status-desc">
-        Maak jou Google Sheet oop &gt; <strong>Share</strong> &gt; stel op <em>"Anyone with the link can view"</em>.
+        Maak jou Google Sheet oop &gt; <strong>Share</strong> &gt; stel op <em>"Anyone with the link can view"</em>. Of laai 'n CSV lêer direk op:
       </p>
     </div>
   </div>
@@ -217,22 +217,22 @@
 
 <!-- Hoof Matriks: Inkomste & Uitgawes per maand -->
 <section class="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden shadow-xl">
-  <div class="p-4 sm:p-5 border-b border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
+  <div class="p-4 sm:p-5 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
     <div>
       <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Inkomste &amp; uitgawes per maand</h2>
       <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
-        Klik op enige kategorie (bv. <strong>▸ Kos</strong> of <strong>▸ Bank Koste</strong>) om die onderliggende sub-tipes oop te vou.
+        Klik op enige kategorie om die onderliggende sub-tipes oop te vou.
       </p>
     </div>
 
     <!-- Toegewyde Jaar Kieser vir Maandelikse Tabel -->
-    <div class="flex items-center gap-2 self-start md:self-auto bg-slate-800/90 border border-slate-700 px-3 py-1.5 rounded-lg shadow-sm">
+    <div class="flex items-center gap-2 self-start md:self-auto bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg shadow-sm">
       <label for="monthly-year-select" class="text-xs font-semibold text-slate-300 whitespace-nowrap flex items-center gap-1">
-        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        <svg width="14" height="14" class="text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
         <span>Kies Jaar vir Maande:</span>
       </label>
       <select id="monthly-year-select" class="bg-slate-900 text-blue-400 font-bold border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-blue-500">
-        <!-- Dinamies gevul met jare uit die data -->
+        <!-- Dinamies gevul met alle jare uit die data -->
       </select>
     </div>
   </div>
@@ -242,7 +242,7 @@
     <table id="monthly-matrix-table" class="w-full text-left border-collapse text-xs sm:text-sm">
       <thead>
         <tr id="matrix-head-row" class="bg-slate-800/90 text-slate-300 font-semibold border-b border-slate-700">
-          <th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[200px]">Kategorie</th>
+          <th class="py-3 px-4 sticky-col min-w-[210px] border-r border-slate-700">Kategorie (Klik vir Sub-tipes)</th>
           <th class="py-3 px-3 text-right">Totaal</th>
           <th class="py-3 px-3 text-right col-average">Gemiddeld</th>
           <th class="py-3 px-3 text-right col-percentage">%</th>
@@ -260,16 +260,16 @@
   <div>
     <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Inkomste &amp; uitgawes per jaar</h2>
     <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
-      Elke kolom is een jaar. Hierdie tabel toon alle historiese jare langs mekaar.
+      Elke kolom is een jaar. Toon alle historiese jare langs mekaar.
     </p>
   </div>
 
   <!-- Jaarlikse Matriks Tabel -->
-  <div class="overflow-x-auto w-full border border-slate-800/80 rounded-lg">
+  <div class="overflow-x-auto w-full border border-slate-800 rounded-lg">
     <table id="yearly-matrix-table" class="w-full text-left border-collapse text-xs sm:text-sm">
       <thead>
         <tr id="yearly-head-row" class="bg-slate-800/90 text-slate-300 font-semibold border-b border-slate-700">
-          <th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[200px]">Kategorie</th>
+          <th class="py-3 px-4 sticky-col min-w-[210px] border-r border-slate-700">Kategorie</th>
           <th class="py-3 px-3 text-right">Totaal</th>
           <th class="py-3 px-3 text-right">Gemiddeld</th>
           <th class="py-3 px-3 text-right">%</th>
@@ -350,12 +350,12 @@
     <div>
       <label class="block font-medium text-slate-200 mb-1">Google Sheet ID</label>
       <input type="text" id="setting-sheet-id" value="1LBOKvSIfIu4pbEgbxT2sedjs_24oYR5b_FxOZAKHTuk" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
-      <p class="text-[11px] text-slate-400 mt-1">Maak seker die blad is gedeel met: <em>"Enigiemand met die skakel kan bekyk"</em>.</p>
+      <p class="text-[11px] text-slate-400 mt-1">Maak seker die blad is gedeel met: <em>"Anyone with the link can view"</em>.</p>
     </div>
 
     <div>
       <label class="block font-medium text-slate-200 mb-1">Werkblad / Blad Naam (Opsioneel)</label>
-      <input type="text" id="setting-sheet-name" placeholder="bv. Sheet1" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
+      <input type="text" id="setting-sheet-name" value="Sheet1" placeholder="bv. Sheet1" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
     </div>
 
     <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
