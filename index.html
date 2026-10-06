@@ -1,2176 +1,374 @@
-<!DOCTYPE html>
-<html lang="af" class="dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inkomste & Uitgawe Dashboard</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js vir interaktiewe finansiële grafieke -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              dark: '#0c111d',
-              card: '#131a29',
-              border: '#1f293d',
-              accent: '#3b82f6',
-              income: '#10b981',
-              expense: '#f43f5e',
-              warning: '#f59e0b'
-            }
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    /* Pasgemaakte rolstawe vir tabelle en dropdowns */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 0.6);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(71, 85, 105, 0.6);
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(100, 116, 139, 0.9);
-    }
-    .badge-filter {
-      transition: all 0.15s ease-in-out;
-    }
-    .badge-filter:hover {
-      border-color: #3b82f6;
-    }
-  </style>
-</head>
-<body class="bg-[#0b0f19] text-slate-100 min-h-screen font-sans antialiased selection:bg-blue-600 selection:text-white">
-
-  <!-- Hoof Houer -->
-  <div class="max-w-[1700px] mx-auto p-3 sm:p-5 lg:p-7 space-y-6">
-
-    <!-- Top Kopbalk -->
-    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-800">
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
-          <span>Inkomste & Uitgawe Dashboard</span>
-        </h1>
-        <p id="tx-status-sub" class="text-xs sm:text-sm text-slate-400 mt-1 flex items-center gap-2">
-          <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Aangemeld — <span id="total-tx-count" class="font-semibold text-slate-200">10 568</span> transaksies gelaai</span>
-        </p>
-      </div>
-
-      <!-- Knoppies regs bo -->
-      <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-        <!-- Tema Wisselaar -->
-        <button id="theme-toggle-btn" title="Skakel Donker/Lig modus" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-          </svg>
-        </button>
-
-        <!-- Instellings Knoppie -->
-        <button id="btn-open-settings" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs sm:text-sm font-medium transition shadow-sm">
-          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-          </svg>
-          <span>Instellings</span>
-        </button>
-
-        <!-- Verfris Knoppie -->
-        <button id="btn-refresh-data" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/90 hover:bg-blue-600 text-white text-xs sm:text-sm font-medium transition shadow-sm">
-          <svg id="refresh-spinner" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-          </svg>
-          <span>Verfris Data</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- Filter Paneel -->
-    <section class="bg-slate-900/60 p-3 sm:p-4 rounded-xl border border-slate-800 space-y-3">
-      <!-- Reeks Dropdown Knoppies (Multi-kies filters) -->
-      <div class="flex flex-wrap items-center gap-2" id="filter-buttons-container">
-        <!-- Kategorie -->
-        <div class="relative dropdown-parent" data-filter="category">
-          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
-            <span class="btn-label font-medium">Kategorie: Alles</span>
-            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </button>
-          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-64 sm:w-72 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
-        </div>
-
-        <!-- Jaar -->
-        <div class="relative dropdown-parent" data-filter="year">
-          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
-            <span class="btn-label font-medium">Jaar: Alles</span>
-            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </button>
-          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
-        </div>
-
-        <!-- Maand -->
-        <div class="relative dropdown-parent" data-filter="month">
-          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
-            <span class="btn-label font-medium">Maand: Alles</span>
-            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </button>
-          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
-        </div>
-
-        <!-- Rekening -->
-        <div class="relative dropdown-parent" data-filter="account">
-          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
-            <span class="btn-label font-medium">Rekening: Alles</span>
-            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </button>
-          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
-        </div>
-
-        <!-- Bank -->
-        <div class="relative dropdown-parent" data-filter="bank">
-          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
-            <span class="btn-label font-medium">Bank: Alles</span>
-            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </button>
-          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-60 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
-        </div>
-
-        <!-- Type -->
-        <div class="relative dropdown-parent" data-filter="type">
-          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
-            <span class="btn-label font-medium">Type: Alles</span>
-            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </button>
-          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
-        </div>
-
-        <!-- Sub Type -->
-        <div class="relative dropdown-parent" data-filter="subtype">
-          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
-            <span class="btn-label font-medium">Sub Type: Alles</span>
-            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </button>
-          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
-        </div>
-
-        <!-- Tax Year -->
-        <div class="relative dropdown-parent" data-filter="taxYear">
-          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
-            <span class="btn-label font-medium">Tax Year: Alles</span>
-            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </button>
-          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
-        </div>
-
-        <!-- Tax Period -->
-        <div class="relative dropdown-parent" data-filter="taxPeriod">
-          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
-            <span class="btn-label font-medium">Tax Period: Alles</span>
-            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </button>
-          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
-        </div>
-      </div>
-
-      <!-- Bykomende Filter Beheer & Sorteer -->
-      <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/80 text-xs sm:text-sm">
-        <div class="flex flex-wrap items-center gap-3 sm:gap-4">
-          <!-- Herstel Filters Knoppie -->
-          <button id="btn-reset-filters" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
-            Herstel filters
-          </button>
-
-          <!-- Wys Gemiddeld -->
-          <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white select-none">
-            <input type="checkbox" id="chk-show-average" checked class="w-4 h-4 rounded text-blue-600 bg-slate-800 border-slate-700 focus:ring-blue-500">
-            <span>Wys Gemiddeld</span>
-          </label>
-
-          <!-- Wys % -->
-          <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white select-none">
-            <input type="checkbox" id="chk-show-percentage" checked class="w-4 h-4 rounded text-blue-600 bg-slate-800 border-slate-700 focus:ring-blue-500">
-            <span>Wys %</span>
-          </label>
-        </div>
-
-        <!-- Sorteer Kategorie Dropdown -->
-        <div class="flex items-center gap-2">
-          <label for="select-sort" class="text-slate-400 hidden sm:inline">Sorteer Kategorie:</label>
-          <select id="select-sort" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2.5 py-1 text-xs sm:text-sm focus:outline-none focus:border-blue-500">
-            <option value="total_desc">Volgens Totaal (groot → klein)</option>
-            <option value="total_asc">Volgens Totaal (klein → groot)</option>
-            <option value="alpha_asc">Alfabeties (A → Z)</option>
-            <option value="alpha_desc">Alfabeties (Z → A)</option>
-          </select>
-        </div>
-      </div>
-    </section>
-
-    <!-- Google Sheet Status / Waarskuwing Balkie -->
-    <div id="connection-status-banner" class="hidden bg-amber-950/40 border border-amber-800/70 rounded-xl p-3 sm:p-4 text-xs sm:text-sm text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
-      <div class="flex items-start gap-2.5">
-        <span class="text-lg">⚠️</span>
-        <div>
-          <span class="font-bold text-amber-300" id="banner-status-title">Google Sheet nie publiek toeganklik nie</span>
-          <p class="text-amber-300/80 text-xs mt-0.5" id="banner-status-desc">
-            Om jou 10 568 transaksies lewendig te laai: Maak jou Google Sheet oop > <strong>Share</strong> > stel op <em>"Anyone with the link can view"</em>.
-          </p>
-        </div>
-      </div>
-      <div class="flex items-center gap-2 flex-shrink-0">
-        <button id="btn-banner-settings" class="px-3 py-1.5 bg-amber-800/60 hover:bg-amber-700 text-amber-100 rounded-lg text-xs font-medium transition">
-          Instellings
-        </button>
-        <label class="cursor-pointer px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition inline-flex items-center gap-1 shadow-sm">
-          <span>Laai CSV Lêer</span>
-          <input type="file" id="banner-csv-upload" accept=".csv" class="hidden">
-        </label>
-      </div>
-    </div>
-
-    <!-- Sleutel Syfers (KPI Kaarte) -->
-    <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <!-- Totale inkomste -->
-      <div class="bg-slate-900/80 rounded-xl p-4 sm:p-5 border border-slate-800 relative overflow-hidden group shadow-lg">
-        <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Totale inkomste</div>
-        <div class="mt-2 flex items-baseline gap-2">
-          <span id="kpi-total-income" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">R 0</span>
-          <span class="text-emerald-400 text-sm font-semibold flex items-center">▲</span>
-        </div>
-        <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
-          <div class="bg-emerald-500 h-full rounded-full" style="width: 100%"></div>
-        </div>
-      </div>
-
-      <!-- Totale uitgawes -->
-      <div class="bg-slate-900/80 rounded-xl p-4 sm:p-5 border border-slate-800 relative overflow-hidden group shadow-lg">
-        <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Totale uitgawes</div>
-        <div class="mt-2 flex items-baseline gap-2">
-          <span id="kpi-total-expenses" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">R 0</span>
-          <span class="text-rose-500 text-sm font-semibold flex items-center">▼</span>
-        </div>
-        <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
-          <div id="kpi-expense-bar" class="bg-rose-500 h-full rounded-full" style="width: 28%"></div>
-        </div>
-      </div>
-
-      <!-- Netto saldo -->
-      <div class="bg-slate-900/80 rounded-xl p-4 sm:p-5 border border-slate-800 relative overflow-hidden group shadow-lg">
-        <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Netto saldo</div>
-        <div class="mt-2 flex items-baseline gap-2">
-          <span id="kpi-net-balance" class="text-2xl sm:text-3xl font-extrabold text-emerald-400 tracking-tight">R 0</span>
-          <span id="kpi-net-arrow" class="text-emerald-400 text-sm font-semibold flex items-center">▲</span>
-        </div>
-        <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
-          <div id="kpi-net-bar" class="bg-emerald-500 h-full rounded-full" style="width: 72%"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Hoof Matriks Tabel: Inkomste & Uitgawes per maand -->
-    <section class="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden shadow-xl">
-      <div class="p-4 sm:p-5 border-b border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div>
-          <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Inkomste & uitgawes per maand</h2>
-          <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
-            Kliek op enige kategorie (bv. <strong>▸ Income</strong> of <strong>▸ Expense</strong>) om die onderliggende sub-tipes oop te vou.
-          </p>
-        </div>
-
-        <!-- Toegewyde Jaar Kieser vir Maandelikse Tabel -->
-        <div class="flex items-center gap-2 self-start md:self-auto bg-slate-800/90 border border-slate-700 px-3 py-1.5 rounded-lg shadow-sm">
-          <label for="monthly-year-select" class="text-xs font-semibold text-slate-300 whitespace-nowrap flex items-center gap-1">
-            <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            <span>Kies Jaar vir Maande:</span>
-          </label>
-          <select id="monthly-year-select" class="bg-slate-900 text-blue-400 font-bold border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-blue-500">
-            <option value="2026" selected>2026</option>
-            <option value="2025">2025</option>
-            <option value="2024">2024</option>
-            <option value="2023">2023</option>
-            <option value="2022">2022</option>
-            <option value="ALL">Alle Jare</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Tabel Rol area -->
-      <div class="overflow-x-auto w-full">
-        <table id="monthly-matrix-table" class="w-full text-left border-collapse text-xs sm:text-sm">
-          <thead>
-            <!-- Dinamies gegenereerde maande kolomme -->
-            <tr id="matrix-head-row" class="bg-slate-800/90 text-slate-300 font-semibold border-b border-slate-700">
-              <th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[180px]">Kategorie</th>
-              <th class="py-3 px-3 text-right">Totaal</th>
-              <th class="py-3 px-3 text-right col-average">Gemiddeld</th>
-              <th class="py-3 px-3 text-right col-percentage">%</th>
-            </tr>
-          </thead>
-          <tbody id="matrix-body" class="divide-y divide-slate-800/50">
-            <!-- Ry groepe en data word dinamies gelaai -->
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Inkomste & uitgawes per jaar Seksie -->
-    <section class="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden shadow-xl space-y-4 p-4 sm:p-5">
-      <div>
-        <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Inkomste & uitgawes per jaar</h2>
-        <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
-          Elke kolom is een gekose jaar. Gehoorsaam al die filters hierbo, behalwe die Jaar-filter — hierdie blok het sy eie Jaar-keuse hieronder.
-        </p>
-      </div>
-
-      <!-- Jaar Filter vir Jaarlikse Tabel -->
-      <div class="flex items-center gap-2">
-        <div class="relative dropdown-parent" data-filter="yearlyTableYears">
-          <button id="yearly-filter-btn" class="badge-filter filter-trigger inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
-            <span id="yearly-filter-label" class="font-medium">Jaar: Alles</span>
-            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </button>
-          <div id="yearly-filter-panel" class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
-        </div>
-      </div>
-
-      <!-- Oorvleuelende Kategorieë Waarskuwing -->
-      <div id="overlap-warning-box" class="bg-red-950/40 border border-red-800/60 rounded-lg p-3 text-xs sm:text-sm text-red-200 space-y-1">
-        <div class="flex items-center gap-2 font-semibold text-rose-400">
-          <span>⚠️ Oorvleuelende kategorieë bespeur:</span>
-        </div>
-        <ul id="overlap-warning-list" class="list-disc list-inside text-rose-300/90 pl-1 space-y-0.5 text-xs">
-          <li>Ander Inkomste: 1 transaksies verskyn onder Uitgawes (Sheet rye: 7803)</li>
-        </ul>
-      </div>
-
-      <!-- Jaarlikse Matriks Tabel -->
-      <div class="overflow-x-auto w-full border border-slate-800/80 rounded-lg">
-        <table id="yearly-matrix-table" class="w-full text-left border-collapse text-xs sm:text-sm">
-          <thead>
-            <tr id="yearly-head-row" class="bg-slate-800/90 text-slate-300 font-semibold border-b border-slate-700">
-              <th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[180px]">Kategorie</th>
-              <th class="py-3 px-3 text-right">Totaal</th>
-              <th class="py-3 px-3 text-right">Gemiddeld</th>
-              <th class="py-3 px-3 text-right">%</th>
-            </tr>
-          </thead>
-          <tbody id="yearly-matrix-body" class="divide-y divide-slate-800/50">
-            <!-- Dinamies gevul -->
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Grafiek 1: Saldo per rekening (Staafgrafiek) -->
-    <section class="bg-slate-900/80 rounded-xl border border-slate-800 p-4 sm:p-5 shadow-xl space-y-4">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div>
-          <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Saldo per rekening</h2>
-          <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
-            Sluitingsaldo (laaste bekende Balance-waarde) per maand, opgetel oor die gekose rekening(e) hieronder.
-          </p>
-        </div>
-
-        <div class="flex items-center gap-3 flex-wrap">
-          <div class="flex items-center gap-2 text-xs sm:text-sm">
-            <span class="text-slate-400">Rekeninge:</span>
-            <select id="balance-bar-account-select" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none">
-              <option value="ALL">Alles</option>
-            </select>
-          </div>
-
-          <div class="flex items-center gap-2 text-xs sm:text-sm">
-            <span class="text-slate-400">Aantal maande:</span>
-            <select id="balance-bar-month-range" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none">
-              <option value="6">6</option>
-              <option value="12" selected>12</option>
-              <option value="24">24</option>
-              <option value="ALL">Alles</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Staafgrafiek Canvas Houer -->
-      <div class="w-full h-64 sm:h-72 pt-2 relative">
-        <canvas id="chart-balance-bars"></canvas>
-      </div>
-    </section>
-
-    <!-- Grafiek 2: Totale saldo (Areagrafiek / Tendenslyn) -->
-    <section class="bg-slate-900/80 rounded-xl border border-slate-800 p-4 sm:p-5 shadow-xl space-y-4">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div>
-          <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Totale saldo</h2>
-          <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
-            Som van elke gekose rekening se sluitingsaldo per maand.
-          </p>
-        </div>
-
-        <div class="flex items-center gap-3 flex-wrap">
-          <div class="flex items-center gap-2 text-xs sm:text-sm">
-            <span class="text-slate-400">Rekeninge:</span>
-            <select id="balance-line-account-select" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none">
-              <option value="ALL">Alles</option>
-            </select>
-          </div>
-
-          <div class="flex items-center gap-2 text-xs sm:text-sm">
-            <span class="text-slate-400">Aantal maande:</span>
-            <select id="balance-line-month-range" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none">
-              <option value="6">6</option>
-              <option value="12" selected>12</option>
-              <option value="24">24</option>
-              <option value="ALL">Alles</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Areagrafiek Canvas Houer -->
-      <div class="w-full h-64 sm:h-72 pt-2 relative">
-        <canvas id="chart-total-balance-line"></canvas>
-      </div>
-    </section>
-
+<!-- Top Kopbalk -->
+<header class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+  <div>
+    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
+      <span>Inkomste &amp; Uitgawe Dashboard</span>
+    </h1>
+    <p id="tx-status-sub" class="text-xs sm:text-sm text-slate-400 mt-1 flex items-center gap-2">
+      <span id="status-indicator" class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span>Aangemeld — <span id="total-tx-count" class="font-semibold text-slate-200">0</span> transaksies gelaai</span>
+    </p>
   </div>
 
-  <!-- Instellings & Verbinding Modal -->
-  <div id="settings-modal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-          <span>Google Sheet & Data Instellings</span>
-        </h3>
-        <button id="btn-close-settings" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+  <!-- Knoppies regs bo -->
+  <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+    <!-- Tema Wisselaar -->
+    <button id="theme-toggle-btn" title="Skakel Donker/Lig modus" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+      </svg>
+    </button>
+
+    <!-- Instellings Knoppie -->
+    <button id="btn-open-settings" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs sm:text-sm font-medium transition shadow-sm">
+      <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+      </svg>
+      <span>Instellings</span>
+    </button>
+
+    <!-- Verfris Knoppie -->
+    <button id="btn-refresh-data" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/90 hover:bg-blue-600 text-white text-xs sm:text-sm font-medium transition shadow-sm">
+      <svg id="refresh-spinner" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+      </svg>
+      <span>Verfris Data</span>
+    </button>
+  </div>
+</header>
+
+<!-- Filter Paneel -->
+<section class="bg-slate-900/60 p-3 sm:p-4 rounded-xl border border-slate-800 space-y-3">
+  <!-- Dropdown Knoppies -->
+  <div class="flex flex-wrap items-center gap-2" id="filter-buttons-container">
+    <!-- Kategorie -->
+    <div class="relative dropdown-parent" data-filter="category">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+        <span class="btn-label font-medium">Kategorie: Alles</span>
+        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-64 sm:w-72 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+    </div>
+
+    <!-- Jaar -->
+    <div class="relative dropdown-parent" data-filter="year">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+        <span class="btn-label font-medium">Jaar: Alles</span>
+        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+    </div>
+
+    <!-- Maand -->
+    <div class="relative dropdown-parent" data-filter="month">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+        <span class="btn-label font-medium">Maand: Alles</span>
+        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+    </div>
+
+    <!-- Rekening (ACC NAME) -->
+    <div class="relative dropdown-parent" data-filter="account">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+        <span class="btn-label font-medium">Rekening: Alles</span>
+        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+    </div>
+
+    <!-- Bank -->
+    <div class="relative dropdown-parent" data-filter="bank">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+        <span class="btn-label font-medium">Bank: Alles</span>
+        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-60 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+    </div>
+
+    <!-- Type -->
+    <div class="relative dropdown-parent" data-filter="type">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+        <span class="btn-label font-medium">Type: Alles</span>
+        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+    </div>
+
+    <!-- Sub Type -->
+    <div class="relative dropdown-parent" data-filter="subtype">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+        <span class="btn-label font-medium">Sub Type: Alles</span>
+        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+    </div>
+
+    <!-- Tax Year -->
+    <div class="relative dropdown-parent" data-filter="taxYear">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+        <span class="btn-label font-medium">Tax Year: Alles</span>
+        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+    </div>
+
+    <!-- Tax Period -->
+    <div class="relative dropdown-parent" data-filter="taxPeriod">
+      <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+        <span class="btn-label font-medium">Tax Period: Alles</span>
+        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- Bykomende Beheer & Sortering -->
+  <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/80 text-xs sm:text-sm">
+    <div class="flex flex-wrap items-center gap-3 sm:gap-4">
+      <button id="btn-reset-filters" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
+        Herstel filters
+      </button>
+
+      <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white select-none">
+        <input type="checkbox" id="chk-show-average" checked class="w-4 h-4 rounded text-blue-600 bg-slate-800 border-slate-700 focus:ring-blue-500">
+        <span>Wys Gemiddeld</span>
+      </label>
+
+      <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white select-none">
+        <input type="checkbox" id="chk-show-percentage" checked class="w-4 h-4 rounded text-blue-600 bg-slate-800 border-slate-700 focus:ring-blue-500">
+        <span>Wys %</span>
+      </label>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <label for="select-sort" class="text-slate-400 hidden sm:inline">Sorteer Kategorie:</label>
+      <select id="select-sort" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2.5 py-1 text-xs sm:text-sm focus:outline-none focus:border-blue-500">
+        <option value="total_desc">Volgens Totaal (groot → klein)</option>
+        <option value="total_asc">Volgens Totaal (klein → groot)</option>
+        <option value="alpha_asc">Alfabeties (A → Z)</option>
+        <option value="alpha_desc">Alfabeties (Z → A)</option>
+      </select>
+    </div>
+  </div>
+</section>
+
+<!-- Google Sheet Status Waarskuwing -->
+<div id="connection-status-banner" class="hidden bg-amber-950/40 border border-amber-800/70 rounded-xl p-3 sm:p-4 text-xs sm:text-sm text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+  <div class="flex items-start gap-2.5">
+    <span class="text-lg">⚠️</span>
+    <div>
+      <span class="font-bold text-amber-300" id="banner-status-title">Google Sheet nie publiek toeganklik nie</span>
+      <p class="text-amber-300/80 text-xs mt-0.5" id="banner-status-desc">
+        Maak jou Google Sheet oop &gt; <strong>Share</strong> &gt; stel op <em>"Anyone with the link can view"</em>.
+      </p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2 flex-shrink-0">
+    <button id="btn-banner-settings" class="px-3 py-1.5 bg-amber-800/60 hover:bg-amber-700 text-amber-100 rounded-lg text-xs font-medium transition">
+      Instellings
+    </button>
+    <label class="cursor-pointer px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition inline-flex items-center gap-1 shadow-sm">
+      <span>Laai CSV Lêer</span>
+      <input type="file" id="banner-csv-upload" accept=".csv" class="hidden">
+    </label>
+  </div>
+</div>
+
+<!-- Sleutel Syfers (KPI Kaarte) -->
+<section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+  <!-- Totale inkomste -->
+  <div class="bg-slate-900/80 rounded-xl p-4 sm:p-5 border border-slate-800 relative overflow-hidden group shadow-lg">
+    <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Totale inkomste</div>
+    <div class="mt-2 flex items-baseline gap-2">
+      <span id="kpi-total-income" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">R 0</span>
+      <span class="text-emerald-400 text-sm font-semibold flex items-center">▲</span>
+    </div>
+    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+      <div class="bg-emerald-500 h-full rounded-full" style="width: 100%"></div>
+    </div>
+  </div>
+
+  <!-- Totale uitgawes -->
+  <div class="bg-slate-900/80 rounded-xl p-4 sm:p-5 border border-slate-800 relative overflow-hidden group shadow-lg">
+    <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Totale uitgawes</div>
+    <div class="mt-2 flex items-baseline gap-2">
+      <span id="kpi-total-expenses" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">R 0</span>
+      <span class="text-rose-500 text-sm font-semibold flex items-center">▼</span>
+    </div>
+    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+      <div id="kpi-expense-bar" class="bg-rose-500 h-full rounded-full" style="width: 50%"></div>
+    </div>
+  </div>
+
+  <!-- Netto saldo -->
+  <div class="bg-slate-900/80 rounded-xl p-4 sm:p-5 border border-slate-800 relative overflow-hidden group shadow-lg">
+    <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Netto saldo</div>
+    <div class="mt-2 flex items-baseline gap-2">
+      <span id="kpi-net-balance" class="text-2xl sm:text-3xl font-extrabold text-emerald-400 tracking-tight">R 0</span>
+      <span id="kpi-net-arrow" class="text-emerald-400 text-sm font-semibold flex items-center">▲</span>
+    </div>
+    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+      <div id="kpi-net-bar" class="bg-emerald-500 h-full rounded-full" style="width: 50%"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Hoof Matriks: Inkomste & Uitgawes per maand -->
+<section class="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden shadow-xl">
+  <div class="p-4 sm:p-5 border-b border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div>
+      <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Inkomste &amp; uitgawes per maand</h2>
+      <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+        Klik op enige kategorie (bv. <strong>▸ Kos</strong> of <strong>▸ Bank Koste</strong>) om die onderliggende sub-tipes oop te vou.
+      </p>
+    </div>
+
+    <!-- Toegewyde Jaar Kieser vir Maandelikse Tabel -->
+    <div class="flex items-center gap-2 self-start md:self-auto bg-slate-800/90 border border-slate-700 px-3 py-1.5 rounded-lg shadow-sm">
+      <label for="monthly-year-select" class="text-xs font-semibold text-slate-300 whitespace-nowrap flex items-center gap-1">
+        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        <span>Kies Jaar vir Maande:</span>
+      </label>
+      <select id="monthly-year-select" class="bg-slate-900 text-blue-400 font-bold border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-blue-500">
+        <!-- Dinamies gevul met jare uit die data -->
+      </select>
+    </div>
+  </div>
+
+  <!-- Tabel Rol area -->
+  <div class="overflow-x-auto w-full">
+    <table id="monthly-matrix-table" class="w-full text-left border-collapse text-xs sm:text-sm">
+      <thead>
+        <tr id="matrix-head-row" class="bg-slate-800/90 text-slate-300 font-semibold border-b border-slate-700">
+          <th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[200px]">Kategorie</th>
+          <th class="py-3 px-3 text-right">Totaal</th>
+          <th class="py-3 px-3 text-right col-average">Gemiddeld</th>
+          <th class="py-3 px-3 text-right col-percentage">%</th>
+        </tr>
+      </thead>
+      <tbody id="matrix-body" class="divide-y divide-slate-800/50">
+        <!-- Rye word dinamies gelaai -->
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Inkomste & uitgawes per jaar Seksie -->
+<section class="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden shadow-xl space-y-4 p-4 sm:p-5">
+  <div>
+    <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Inkomste &amp; uitgawes per jaar</h2>
+    <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+      Elke kolom is een jaar. Hierdie tabel toon alle historiese jare langs mekaar.
+    </p>
+  </div>
+
+  <!-- Jaarlikse Matriks Tabel -->
+  <div class="overflow-x-auto w-full border border-slate-800/80 rounded-lg">
+    <table id="yearly-matrix-table" class="w-full text-left border-collapse text-xs sm:text-sm">
+      <thead>
+        <tr id="yearly-head-row" class="bg-slate-800/90 text-slate-300 font-semibold border-b border-slate-700">
+          <th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[200px]">Kategorie</th>
+          <th class="py-3 px-3 text-right">Totaal</th>
+          <th class="py-3 px-3 text-right">Gemiddeld</th>
+          <th class="py-3 px-3 text-right">%</th>
+        </tr>
+      </thead>
+      <tbody id="yearly-matrix-body" class="divide-y divide-slate-800/50">
+        <!-- Dinamies gevul -->
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Grafiek 1: Saldo per rekening -->
+<section class="bg-slate-900/80 rounded-xl border border-slate-800 p-4 sm:p-5 shadow-xl space-y-4">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div>
+      <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Saldo per rekening</h2>
+      <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+        Sluitingsaldo per maand volgens rekening.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3 flex-wrap">
+      <div class="flex items-center gap-2 text-xs sm:text-sm">
+        <span class="text-slate-400">Rekening:</span>
+        <select id="balance-bar-account-select" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none">
+          <option value="ALL">Alles</option>
+        </select>
       </div>
 
-      <div class="space-y-4 text-xs sm:text-sm text-slate-300">
-        <div>
-          <label class="block font-medium text-slate-200 mb-1">Google Sheet ID</label>
-          <input type="text" id="setting-sheet-id" value="1LBOKvSIfIu4pbEgbxT2sedjs_24oYR5b_FxOZAKHTuk" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
-          <p class="text-[11px] text-slate-400 mt-1">Maak seker die Google Sheet is gedeel met: <em>"Enigiemand met die skakel kan bekyk"</em> (Anyone with the link can view).</p>
-        </div>
-
-        <div>
-          <label class="block font-medium text-slate-200 mb-1">Werkblad / Blad Naam (Opsioneel)</label>
-          <input type="text" id="setting-sheet-name" placeholder="bv. Blad1 of Transaksies" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
-        </div>
-
-        <div>
-          <label class="block font-medium text-slate-200 mb-1">Apps Script Web App URL (Opsioneel)</label>
-          <input type="text" id="setting-apps-script-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
-          <p class="text-[11px] text-slate-400 mt-1">As jou blad privaat is en slegs via jou bestaande Google Apps Script HTML/Web App beskikbaar is, plak die Web App URL hier.</p>
-        </div>
-
-        <!-- CSV Laai / Toets Data knoppie -->
-        <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
-          <span class="text-xs text-slate-400">Of laai 'n CSV-uitvoer direk:</span>
-          <label class="cursor-pointer inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs">
-            <span>Kies CSV Lêer</span>
-            <input type="file" id="file-csv-upload" accept=".csv" class="hidden">
-          </label>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
-        <button id="btn-cancel-settings" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm">Kanselleer</button>
-        <button id="btn-save-settings" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs sm:text-sm">Stoor & Laai Data</button>
+      <div class="flex items-center gap-2 text-xs sm:text-sm">
+        <span class="text-slate-400">Aantal maande:</span>
+        <select id="balance-bar-month-range" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none">
+          <option value="6">6</option>
+          <option value="12" selected>12</option>
+          <option value="24">24</option>
+          <option value="ALL">Alles</option>
+        </select>
       </div>
     </div>
   </div>
 
-  <!-- Boodskap Notifikasie Houer -->
-  <div id="toast" class="fixed bottom-4 right-4 z-50 hidden max-w-sm bg-slate-800 text-slate-100 border border-slate-700 rounded-xl px-4 py-3 shadow-2xl text-xs sm:text-sm flex items-center gap-3">
-    <span id="toast-message">Boodskap</span>
+  <div class="w-full h-64 sm:h-72 pt-2 relative">
+    <canvas id="chart-balance-bars"></canvas>
+  </div>
+</section>
+
+<!-- Grafiek 2: Totale saldo Tendenslyn -->
+<section class="bg-slate-900/80 rounded-xl border border-slate-800 p-4 sm:p-5 shadow-xl space-y-4">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div>
+      <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Totale saldo verloop</h2>
+      <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+        Maandelikse sluitingsaldo tendens.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3 flex-wrap">
+      <div class="flex items-center gap-2 text-xs sm:text-sm">
+        <span class="text-slate-400">Aantal maande:</span>
+        <select id="balance-line-month-range" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none">
+          <option value="12">12</option>
+          <option value="24">24</option>
+          <option value="36">36</option>
+          <option value="ALL" selected>Alles</option>
+        </select>
+      </div>
+    </div>
   </div>
 
-  <script>
-    // State bestuur - URL hash behoud vir herlaai en boekmerk
-    const APP_CONFIG = {
-      defaultSheetId: '1LBOKvSIfIu4pbEgbxT2sedjs_24oYR5b_FxOZAKHTuk',
-      sheetId: '1LBOKvSIfIu4pbEgbxT2sedjs_24oYR5b_FxOZAKHTuk',
-      sheetName: '',
-      appsScriptUrl: ''
-    };
-
-    // Globale data houers
-    let rawTransactions = [];
-    let filteredTransactions = [];
-
-    let expandedCategories = new Set();
-    let expandedYearlyCategories = new Set();
-
-    // Filter toestand
-    let filterState = {
-      category: [],
-      year: [],
-      month: [],
-      account: [],
-      bank: [],
-      type: [],
-      subtype: [],
-      taxYear: [],
-      taxPeriod: [],
-      monthlyYear: '2026',
-      yearlyYears: [],
-      showAverage: true,
-      showPercentage: true,
-      sort: 'total_desc',
-      balanceMonths: '12',
-      balanceAccount: 'ALL'
-    };
-
-    // Chart instansies
-    let barChartInstance = null;
-    let lineChartInstance = null;
-
-    // Maand name vertalings en volgorde
-    const MONTH_NAMES_AF = [
-      'Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'
-    ];
-
-    function showToast(msg, duration = 3500) {
-      const toast = document.getElementById('toast');
-      const text = document.getElementById('toast-message');
-      if (toast && text) {
-        text.textContent = msg;
-        toast.classList.remove('hidden');
-        setTimeout(() => {
-          toast.classList.add('hidden');
-        }, duration);
-      }
-    }
-
-    // Stoor filter keuses in die URL hash sodat die blad oopmaak presies soos dit gelaat is
-    function saveStateToUrl() {
-      try {
-        const statePayload = {
-          c: filterState.category,
-          y: filterState.year,
-          m: filterState.month,
-          a: filterState.account,
-          b: filterState.bank,
-          t: filterState.type,
-          st: filterState.subtype,
-          ty: filterState.taxYear,
-          tp: filterState.taxPeriod,
-          my: filterState.monthlyYear,
-          yy: filterState.yearlyYears,
-          avg: filterState.showAverage ? 1 : 0,
-          pct: filterState.showPercentage ? 1 : 0,
-          srt: filterState.sort,
-          bm: filterState.balanceMonths,
-          ba: filterState.balanceAccount
-        };
-        const encoded = encodeURIComponent(JSON.stringify(statePayload));
-        window.history.replaceState(null, '', '#' + encoded);
-      } catch (err) {
-        console.warn('Kon nie toestand na URL skryf nie:', err);
-      }
-    }
-
-    // Lees toestand uit die URL hash
-    function loadStateFromUrl() {
-      try {
-        const hash = window.location.hash.slice(1);
-        if (!hash) return;
-        const decoded = JSON.parse(decodeURIComponent(hash));
-        if (Array.isArray(decoded.c)) filterState.category = decoded.c;
-        if (Array.isArray(decoded.y)) filterState.year = decoded.y;
-        if (Array.isArray(decoded.m)) filterState.month = decoded.m;
-        if (Array.isArray(decoded.a)) filterState.account = decoded.a;
-        if (Array.isArray(decoded.b)) filterState.bank = decoded.b;
-        if (Array.isArray(decoded.t)) filterState.type = decoded.t;
-        if (Array.isArray(decoded.st)) filterState.subtype = decoded.st;
-        if (Array.isArray(decoded.ty)) filterState.taxYear = decoded.ty;
-        if (Array.isArray(decoded.tp)) filterState.taxPeriod = decoded.tp;
-        if (decoded.my) filterState.monthlyYear = decoded.my;
-        if (Array.isArray(decoded.yy)) filterState.yearlyYears = decoded.yy;
-        if (decoded.avg !== undefined) filterState.showAverage = decoded.avg === 1;
-        if (decoded.pct !== undefined) filterState.showPercentage = decoded.pct === 1;
-        if (decoded.srt) filterState.sort = decoded.srt;
-        if (decoded.bm) filterState.balanceMonths = decoded.bm;
-        if (decoded.ba) filterState.balanceAccount = decoded.ba;
-
-        // Pas kontroles aan
-        const chkAvg = document.getElementById('chk-show-average');
-        if (chkAvg) chkAvg.checked = filterState.showAverage;
-        const chkPct = document.getElementById('chk-show-percentage');
-        if (chkPct) chkPct.checked = filterState.showPercentage;
-        const srtSelect = document.getElementById('select-sort');
-        if (srtSelect) srtSelect.value = filterState.sort;
-        const barMonths = document.getElementById('balance-bar-month-range');
-        if (barMonths) barMonths.value = filterState.balanceMonths;
-        const lineMonths = document.getElementById('balance-line-month-range');
-        if (lineMonths) lineMonths.value = filterState.balanceMonths;
-        const moYear = document.getElementById('monthly-year-select');
-        if (moYear) moYear.value = filterState.monthlyYear;
-      } catch (err) {
-        console.warn('Kon nie URL toestand laai nie:', err);
-      }
-    }
-
-    function generateScreenshotBaselineData() {
-      const items = [];
-      let txIdCounter = 1;
-      let runningBalance = 11950000;
-
-      // Historiese data vir 2018-2025 met sub-tipes insluitend Vakansie
-      const historicalYears = [
-        {
-          year: '2018',
-          income: [
-            { cat: 'Interest Income', sub: 'Rente Belegging', val: 354222 },
-            { cat: 'Rente Inkomste', sub: 'Geldmark', val: 450000 }
-          ],
-          expense: []
-        },
-        {
-          year: '2019',
-          income: [{ cat: 'Interest Income', sub: 'Rente Belegging', val: 360684 }],
-          expense: []
-        },
-        {
-          year: '2020',
-          income: [{ cat: 'Interest Income', sub: 'Rente Belegging', val: 199549 }],
-          expense: []
-        },
-        {
-          year: '2021',
-          income: [{ cat: 'Interest Income', sub: 'Rente Belegging', val: 155338 }],
-          expense: []
-        },
-        {
-          year: '2022',
-          income: [
-            { cat: 'Income', sub: 'Salaris / Fooie', val: 1831757 },
-            { cat: 'Interest Income', sub: 'Rente Belegging', val: 282826 },
-            { cat: 'Expense', sub: 'Terugbetalings', val: 373544 }
-          ],
-          expense: [
-            { cat: 'Expense', sub: 'Vakansie', val: 184500 },
-            { cat: 'Expense', sub: 'Algemeen', val: 1259290 },
-            { cat: 'Kos', sub: 'Kruideniersware', val: 152568 },
-            { cat: 'Bank-Koste', sub: 'Diensfooie', val: 11847 },
-            { cat: 'Ongekategoriseer', sub: 'Diverse', val: 3321 }
-          ]
-        },
-        {
-          year: '2023',
-          income: [
-            { cat: 'Income', sub: 'Salaris / Fooie', val: 1274871 },
-            { cat: 'Interest Income', sub: 'Rente Belegging', val: 632123 },
-            { cat: 'Rente Inkomste', sub: 'Geldmark', val: 605000 },
-            { cat: 'Expense', sub: 'Krediete', val: 18897 },
-            { cat: 'Bank-Koste', sub: 'Rente ontvang', val: 100 }
-          ],
-          expense: [
-            { cat: 'Expense', sub: 'Vakansie', val: 215400 },
-            { cat: 'Expense', sub: 'Algemeen', val: 644681 },
-            { cat: 'Kos', sub: 'Kruideniersware', val: 153475 },
-            { cat: 'Bank-Koste', sub: 'Diensfooie', val: 5446 },
-            { cat: 'Ongekategoriseer', sub: 'Diverse', val: 12193 }
-          ]
-        },
-        {
-          year: '2024',
-          income: [
-            { cat: 'Income', sub: 'Salaris / Fooie', val: 1149029 },
-            { cat: 'Interest Income', sub: 'Rente Belegging', val: 697530 },
-            { cat: 'Rente Inkomste', sub: 'Geldmark', val: 10332 }
-          ],
-          expense: [
-            { cat: 'Expense', sub: 'Vakansie', val: 165000 },
-            { cat: 'Expense', sub: 'Brandstof', val: 83426 },
-            { cat: 'Expense', sub: 'Onderhoud', val: 300000 },
-            { cat: 'Kos', sub: 'Kruideniersware', val: 133176 },
-            { cat: 'AInvestment', sub: 'Aandele', val: 350000 },
-            { cat: 'Bank-Koste', sub: 'Diensfooie', val: 7986 },
-            { cat: 'Income', sub: 'Koste regstelling', val: 818 }
-          ]
-        },
-        {
-          year: '2025',
-          income: [
-            { cat: 'Income', sub: 'Salaris / Fooie', val: 1341337 },
-            { cat: 'Interest Income', sub: 'Rente Belegging', val: 703401 }
-          ],
-          expense: [
-            { cat: 'Expense', sub: 'Vakansie', val: 124000 },
-            { cat: 'Expense', sub: 'Algemeen', val: 279420 },
-            { cat: 'Kos', sub: 'Kruideniersware', val: 130704 },
-            { cat: 'Bank-Koste', sub: 'Diensfooie', val: 6274 }
-          ]
-        }
-      ];
-
-      historicalYears.forEach(hy => {
-        hy.income.forEach(item => {
-          items.push({
-            id: txIdCounter++,
-            date: `${hy.year}-06-15`,
-            year: hy.year,
-            month: `Jun '${hy.year.slice(-2)}`,
-            monthIndex: 6,
-            section: 'Inkomste',
-            category: item.cat,
-            subtype: item.sub,
-            amount: item.val,
-            account: 'Tjekrekening',
-            bank: 'FNB',
-            type: 'Income',
-            taxYear: `${hy.year}/${parseInt(hy.year) + 1}`,
-            taxPeriod: 'P1',
-            balance: runningBalance
-          });
-        });
-        hy.expense.forEach(item => {
-          items.push({
-            id: txIdCounter++,
-            date: `${hy.year}-06-20`,
-            year: hy.year,
-            month: `Jun '${hy.year.slice(-2)}`,
-            monthIndex: 6,
-            section: 'Uitgawes',
-            category: item.cat,
-            subtype: item.sub,
-            amount: item.val,
-            account: 'Kredietkaart',
-            bank: 'FNB',
-            type: 'Expense',
-            taxYear: `${hy.year}/${parseInt(hy.year) + 1}`,
-            taxPeriod: 'P1',
-            balance: runningBalance
-          });
-        });
-      });
-
-      // 2026 Maande met gedetailleerde Sub-tipes soos Vakansie, Brandstof ens.
-      const months2026 = [
-        { label: "Jan '26", m: 1, y: 2026, bal: 12050000 },
-        { label: "Feb '26", m: 2, y: 2026, bal: 12010000 },
-        { label: "Mrt '26", m: 3, y: 2026, bal: 12030000 },
-        { label: "Apr '26", m: 4, y: 2026, bal: 12075000 },
-        { label: "Mei '26", m: 5, y: 2026, bal: 12120000 },
-        { label: "Jun '26", m: 6, y: 2026, bal: 12140000 },
-        { label: "Jul '26", m: 7, y: 2026, bal: 12110000 },
-        { label: "Aug '26", m: 8, y: 2026, bal: 12130000 },
-        { label: "Sep '26", m: 9, y: 2026, bal: 12135000 },
-        { label: "Okt '26", m: 10, y: 2026, bal: 12150000 }
-      ];
-
-      const incData = [
-        { cat: 'Income', sub: 'Salaris / Fooie', vals: [132494, 50377, 59338, 53697, 249011, 46891, 96894, 27428, 28307, 0] },
-        { cat: 'Interest Income', sub: 'Rente Belegging', vals: [64036, 62010, 56842, 61648, 61953, 62907, 62621, 65028, 64541, 54879] },
-        { cat: 'Dividends', sub: 'Aandeel Dividende', vals: [0, 0, 0, 0, 0, 0, 0, 0, 148, 0] }
-      ];
-
-      const expData = [
-        { cat: 'Expense', sub: 'Vakansie', vals: [5000, 25000, 8000, 4500, 12000, 42000, 5000, 3500, 6500, 1200] },
-        { cat: 'Expense', sub: 'Brandstof', vals: [4561, 15386, 7623, 8387, 9261, 18269, 6729, 5365, 6060, 2821] },
-        { cat: 'Expense', sub: 'Algemene Dienste', vals: [5000, 20000, 7000, 7000, 8000, 17000, 5000, 5000, 5000, 2000] },
-        { cat: 'Kos', sub: 'Kruideniersware', vals: [9159, 5502, 9159, 9047, 8513, 7160, 6083, 6732, 7351, 3121] },
-        { cat: 'Kos', sub: 'Restaurante / Wegneem', vals: [4000, 2500, 4000, 4000, 3500, 3000, 2800, 3000, 3000, 1200] },
-        { cat: 'Bank-Koste', sub: 'Kaart- & Rekeningfooie', vals: [166, 185, 212, 182, 193, 199, 183, 663, 417, 85] }
-      ];
-
-      months2026.forEach((mo, idx) => {
-        incData.forEach(item => {
-          const val = item.vals[idx];
-          if (val > 0) {
-            items.push({
-              id: txIdCounter++,
-              date: `${mo.y}-${String(mo.m).padStart(2, '0')}-15`,
-              year: String(mo.y),
-              month: mo.label,
-              monthIndex: mo.m,
-              section: 'Inkomste',
-              category: item.cat,
-              subtype: item.sub,
-              amount: val,
-              account: 'Tjekrekening',
-              bank: 'FNB',
-              type: 'Income',
-              taxYear: `${mo.y}/${mo.y + 1}`,
-              taxPeriod: mo.m <= 2 ? 'P1' : 'P2',
-              balance: mo.bal
-            });
-          }
-        });
-
-        expData.forEach(item => {
-          const val = item.vals[idx];
-          if (val > 0) {
-            items.push({
-              id: txIdCounter++,
-              date: `${mo.y}-${String(mo.m).padStart(2, '0')}-20`,
-              year: String(mo.y),
-              month: mo.label,
-              monthIndex: mo.m,
-              section: 'Uitgawes',
-              category: item.cat,
-              subtype: item.sub,
-              amount: val,
-              account: item.cat === 'Bank-Koste' ? 'Tjekrekening' : 'Kredietkaart',
-              bank: 'FNB',
-              type: 'Expense',
-              taxYear: `${mo.y}/${mo.y + 1}`,
-              taxPeriod: mo.m <= 2 ? 'P1' : 'P2',
-              balance: mo.bal
-            });
-          }
-        });
-      });
-
-      // Oorvleuelende voorbeeld transaksie (Sheet ry 7803)
-      items.push({
-        id: 7803,
-        date: '2024-03-10',
-        year: '2024',
-        month: "Mrt '24",
-        monthIndex: 3,
-        section: 'Uitgawes',
-        category: 'Ander Inkomste',
-        subtype: 'Diverse Terugbetaling',
-        amount: 818,
-        account: 'Tjekrekening',
-        bank: 'FNB',
-        type: 'Expense',
-        taxYear: '2024/2025',
-        taxPeriod: 'P1',
-        balance: 11990629
-      });
-
-      return items;
-    }
-
-    function fetchGoogleSheetJSONP(sheetId, sheetName) {
-      return new Promise((resolve, reject) => {
-        const callbackName = 'gvizCallback_' + Math.floor(Math.random() * 1000000);
-        const script = document.createElement('script');
-        let url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${callbackName}`;
-        if (sheetName) url += `&sheet=${encodeURIComponent(sheetName)}`;
-
-        const timeout = setTimeout(() => {
-          cleanup();
-          reject(new Error('Google Sheet versoek het uitgetyd'));
-        }, 6000);
-
-        function cleanup() {
-          clearTimeout(timeout);
-          delete window[callbackName];
-          if (script.parentNode) script.parentNode.removeChild(script);
-        }
-
-        window[callbackName] = function(resp) {
-          cleanup();
-          resolve(resp);
-        };
-
-        script.onerror = function() {
-          cleanup();
-          reject(new Error('Kon nie script laai nie (moontlik privaat)'));
-        };
-
-        script.src = url;
-        document.head.appendChild(script);
-      });
-    }
-
-    async function fetchGoogleSheetData() {
-      const spinner = document.getElementById('refresh-spinner');
-      if (spinner) spinner.classList.add('animate-spin');
-
-      // Kyk eers na localStorage
-      try {
-        const cached = localStorage.getItem('fin_dashboard_data');
-        if (cached && rawTransactions.length === 0) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            rawTransactions = parsed;
-            document.getElementById('total-tx-count').textContent = rawTransactions.length.toLocaleString('af-ZA');
-            applyFiltersAndRender();
-          }
-        }
-      } catch (e) {}
-
-      const sheetId = APP_CONFIG.sheetId.trim();
-      const sheetName = APP_CONFIG.sheetName.trim();
-      let loadedSuccessfully = false;
-
-      try {
-        const resp = await fetchGoogleSheetJSONP(sheetId, sheetName);
-        if (resp && resp.table && resp.table.rows && resp.table.rows.length > 0) {
-          const parsedData = transformGVizToTransactions(resp);
-          if (parsedData.length > 0) {
-            rawTransactions = parsedData;
-            loadedSuccessfully = true;
-            try {
-              localStorage.setItem('fin_dashboard_data', JSON.stringify(rawTransactions));
-            } catch (e) {}
-            document.getElementById('total-tx-count').textContent = rawTransactions.length.toLocaleString('af-ZA');
-            document.getElementById('connection-status-banner').classList.add('hidden');
-            showToast(`${rawTransactions.length} transaksies suksesvol vanaf Google Sheet gelaai!`);
-            applyFiltersAndRender();
-          }
-        }
-      } catch (err) {
-        console.warn('JSONP poging misluk:', err);
-      }
-
-      // Indien die blad privaat is of misluk, vertoon banner en basislyn
-      if (!loadedSuccessfully) {
-        const banner = document.getElementById('connection-status-banner');
-        if (banner) banner.classList.remove('hidden');
-
-        if (rawTransactions.length === 0) {
-          rawTransactions = generateScreenshotBaselineData();
-          document.getElementById('total-tx-count').textContent = '10 568';
-          applyFiltersAndRender();
-        }
-      }
-
-      if (spinner) spinner.classList.remove('animate-spin');
-    }
-
-    function transformGVizToTransactions(gviz) {
-      if (!gviz || !gviz.table || !gviz.table.rows) return [];
-      const cols = gviz.table.cols.map(c => (c.label || c.id || '').trim().toLowerCase());
-      const rows = gviz.table.rows;
-
-      const results = [];
-      rows.forEach((r, idx) => {
-        if (!r.c) return;
-        const rowVals = r.c.map(cell => (cell ? (cell.v !== undefined ? cell.v : cell.f) : ''));
-
-        const dateRaw = rowVals[cols.findIndex(c => c.includes('dat')) !== -1 ? cols.findIndex(c => c.includes('dat')) : 0];
-        const catRaw = rowVals[cols.findIndex(c => c.includes('kat') || c.includes('cat')) !== -1 ? cols.findIndex(c => c.includes('kat') || c.includes('cat')) : 1] || 'Onbekend';
-        const amtRaw = rowVals[cols.findIndex(c => c.includes('bed') || c.includes('amou')) !== -1 ? cols.findIndex(c => c.includes('bed') || c.includes('amou')) : 2] || 0;
-        const accRaw = rowVals[cols.findIndex(c => c.includes('rek') || c.includes('acc')) !== -1 ? cols.findIndex(c => c.includes('rek') || c.includes('acc')) : 3] || 'Hoofrekening';
-        const typeRaw = rowVals[cols.findIndex(c => c.includes('tip') || c.includes('type')) !== -1 ? cols.findIndex(c => c.includes('tip') || c.includes('type')) : 4] || 'Expense';
-        const subRaw = rowVals[cols.findIndex(c => c.includes('sub') || c.includes('beskry') || c.includes('desc')) !== -1 ? cols.findIndex(c => c.includes('sub') || c.includes('beskry') || c.includes('desc')) : 5] || 'Algemeen';
-        const bankRaw = rowVals[cols.findIndex(c => c.includes('bank')) !== -1 ? cols.findIndex(c => c.includes('bank')) : 6] || 'FNB';
-        const balRaw = rowVals[cols.findIndex(c => c.includes('bal') || c.includes('sal')) !== -1 ? cols.findIndex(c => c.includes('bal') || c.includes('sal')) : 7] || 0;
-
-        let numAmount = Math.abs(parseFloat(amtRaw) || 0);
-        let d = new Date(dateRaw);
-        if (isNaN(d.getTime())) d = new Date();
-
-        const monthIdx = d.getMonth();
-        const yearStr = String(d.getFullYear());
-        const monthLabel = `${MONTH_NAMES_AF[monthIdx]} '${yearStr.slice(-2)}`;
-        const isIncome = String(typeRaw).toLowerCase().includes('income') || String(typeRaw).toLowerCase().includes('inkomste');
-
-        results.push({
-          id: idx + 1,
-          date: d.toISOString().split('T')[0],
-          year: yearStr,
-          month: monthLabel,
-          monthIndex: monthIdx + 1,
-          section: isIncome ? 'Inkomste' : 'Uitgawes',
-          category: String(catRaw).trim(),
-          subtype: String(subRaw).trim(),
-          amount: numAmount,
-          account: String(accRaw).trim(),
-          bank: String(bankRaw).trim(),
-          type: String(typeRaw).trim(),
-          taxYear: d.getMonth() >= 2 ? `${d.getFullYear()}/${d.getFullYear() + 1}` : `${d.getFullYear() - 1}/${d.getFullYear()}`,
-          taxPeriod: d.getMonth() < 8 ? 'P1' : 'P2',
-          balance: parseFloat(balRaw) || 0
-        });
-      });
-
-      return results;
-    }
-
-    const filterDefinitions = [
-      { key: 'category', label: 'Kategorie', prop: 'category' },
-      { key: 'year', label: 'Jaar', prop: 'year' },
-      { key: 'month', label: 'Maand', prop: 'month' },
-      { key: 'account', label: 'Rekening', prop: 'account' },
-      { key: 'bank', label: 'Bank', prop: 'bank' },
-      { key: 'type', label: 'Type', prop: 'type' },
-      { key: 'subtype', label: 'Sub Type', prop: 'subtype' },
-      { key: 'taxYear', label: 'Tax Year', prop: 'taxYear' },
-      { key: 'taxPeriod', label: 'Tax Period', prop: 'taxPeriod' }
-    ];
-
-    function setupDropdownPanels() {
-      filterDefinitions.forEach(def => {
-        const parent = document.querySelector(`.dropdown-parent[data-filter="${def.key}"]`);
-        if (!parent) return;
-        const btn = parent.querySelector('.filter-trigger');
-        const panel = parent.querySelector('.dropdown-panel');
-
-        btn.onclick = (e) => {
-          e.stopPropagation();
-          document.querySelectorAll('.dropdown-panel').forEach(p => {
-            if (p !== panel) p.classList.add('hidden');
-          });
-          panel.classList.toggle('hidden');
-          if (!panel.classList.contains('hidden')) {
-            renderDropdownItems(def.key, panel);
-          }
-        };
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('.dropdown-parent')) {
-          document.querySelectorAll('.dropdown-panel').forEach(p => p.classList.add('hidden'));
-        }
-      });
-    }
-
-    function renderDropdownItems(filterKey, panel) {
-      const def = filterDefinitions.find(d => d.key === filterKey);
-      if (!def) return;
-
-      const allVals = Array.from(new Set(rawTransactions.map(t => t[def.prop]))).filter(Boolean).sort();
-      const currentSelected = filterState[filterKey];
-
-      panel.innerHTML = `
-        <div class="space-y-2">
-          <div class="relative">
-            <input type="text" placeholder="Soek ${def.label.toLowerCase()}..." class="filter-search-input w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-blue-500">
-          </div>
-          <div class="flex items-center justify-between text-[11px] text-blue-400 pb-1 border-b border-slate-800">
-            <button class="btn-select-all hover:underline">Kies Alles</button>
-            <button class="btn-deselect-all hover:underline text-slate-400">Maak Skoon</button>
-          </div>
-          <div class="dropdown-list-items max-h-48 overflow-y-auto space-y-1 pr-1 text-xs">
-            ${allVals.map(val => {
-              const isChecked = currentSelected.length === 0 || currentSelected.includes(val);
-              const count = rawTransactions.filter(t => t[def.prop] === val).length;
-              return `
-                <label class="flex items-center justify-between p-1 rounded hover:bg-slate-800/80 cursor-pointer text-slate-200">
-                  <div class="flex items-center gap-2 truncate">
-                    <input type="checkbox" value="${encodeURIComponent(val)}" ${isChecked ? 'checked' : ''} class="item-checkbox rounded text-blue-600 bg-slate-800 border-slate-700 focus:ring-0">
-                    <span class="truncate" title="${val}">${val}</span>
-                  </div>
-                  <span class="text-[10px] text-slate-500 font-mono">${count}</span>
-                </label>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
-
-      const listContainer = panel.querySelector('.dropdown-list-items');
-      const searchInput = panel.querySelector('.filter-search-input');
-
-      searchInput.oninput = (e) => {
-        const query = e.target.value.toLowerCase();
-        listContainer.querySelectorAll('label').forEach(lbl => {
-          const text = lbl.textContent.toLowerCase();
-          lbl.style.display = text.includes(query) ? 'flex' : 'none';
-        });
-      };
-
-      panel.querySelector('.btn-select-all').onclick = () => {
-        filterState[filterKey] = [];
-        updateFilterButtonLabels();
-        saveStateToUrl();
-        applyFiltersAndRender();
-        renderDropdownItems(filterKey, panel);
-      };
-
-      panel.querySelector('.btn-deselect-all').onclick = () => {
-        filterState[filterKey] = ['__NONE__'];
-        updateFilterButtonLabels();
-        saveStateToUrl();
-        applyFiltersAndRender();
-        renderDropdownItems(filterKey, panel);
-      };
-
-      listContainer.querySelectorAll('.item-checkbox').forEach(chk => {
-        chk.onchange = () => {
-          const checkedCheckboxes = Array.from(listContainer.querySelectorAll('.item-checkbox:checked')).map(c => decodeURIComponent(c.value));
-          if (checkedCheckboxes.length === allVals.length || checkedCheckboxes.length === 0) {
-            filterState[filterKey] = [];
-          } else {
-            filterState[filterKey] = checkedCheckboxes;
-          }
-          updateFilterButtonLabels();
-          saveStateToUrl();
-          applyFiltersAndRender();
-        };
-      });
-    }
-
-    function updateFilterButtonLabels() {
-      filterDefinitions.forEach(def => {
-        const parent = document.querySelector(`.dropdown-parent[data-filter="${def.key}"]`);
-        if (!parent) return;
-        const labelSpan = parent.querySelector('.btn-label');
-        const selected = filterState[def.key];
-
-        if (!selected || selected.length === 0) {
-          labelSpan.textContent = `${def.label}: Alles`;
-          labelSpan.parentElement.classList.remove('border-blue-500', 'bg-blue-950/40');
-        } else if (selected.includes('__NONE__')) {
-          labelSpan.textContent = `${def.label}: 0 gekies`;
-          labelSpan.parentElement.classList.add('border-blue-500', 'bg-blue-950/40');
-        } else {
-          labelSpan.textContent = `${def.label}: ${selected.length} gekies`;
-          labelSpan.parentElement.classList.add('border-blue-500', 'bg-blue-950/40');
-        }
-      });
-    }
-
-    function applyFilters() {
-      filteredTransactions = rawTransactions.filter(item => {
-        for (const def of filterDefinitions) {
-          const selected = filterState[def.key];
-          if (selected && selected.length > 0) {
-            if (selected.includes('__NONE__')) return false;
-            if (!selected.includes(item[def.prop])) return false;
-          }
-        }
-        return true;
-      });
-    }
-
-    function formatCurrency(num) {
-      if (num === 0 || isNaN(num)) return 'R 0';
-      const formatted = Math.round(num).toLocaleString('af-ZA').replace(/,/g, ' ');
-      return `R ${formatted}`;
-    }
-
-    function renderSummaryKPIs() {
-      let totalIncome = 0;
-      let totalExpenses = 0;
-
-      filteredTransactions.forEach(t => {
-        if (t.section === 'Inkomste') {
-          totalIncome += t.amount;
-        } else {
-          totalExpenses += t.amount;
-        }
-      });
-
-      const netBalance = totalIncome - totalExpenses;
-
-      document.getElementById('kpi-total-income').textContent = formatCurrency(totalIncome);
-      document.getElementById('kpi-total-expenses').textContent = formatCurrency(totalExpenses);
-
-      const netElem = document.getElementById('kpi-net-balance');
-      const arrowElem = document.getElementById('kpi-net-arrow');
-      netElem.textContent = formatCurrency(netBalance);
-
-      if (netBalance >= 0) {
-        netElem.className = 'text-2xl sm:text-3xl font-extrabold text-emerald-400 tracking-tight';
-        arrowElem.textContent = '▲';
-        arrowElem.className = 'text-emerald-400 text-sm font-semibold flex items-center';
-      } else {
-        netElem.className = 'text-2xl sm:text-3xl font-extrabold text-rose-500 tracking-tight';
-        arrowElem.textContent = '▼';
-        arrowElem.className = 'text-rose-500 text-sm font-semibold flex items-center';
-      }
-
-      const maxVal = Math.max(totalIncome, totalExpenses, 1);
-      document.getElementById('kpi-expense-bar').style.width = `${Math.min(100, Math.round((totalExpenses / maxVal) * 100))}%`;
-      document.getElementById('kpi-net-bar').style.width = `${Math.min(100, Math.round((Math.max(0, netBalance) / maxVal) * 100))}%`;
-    }
-
-    function toggleCategoryExpand(catName) {
-      const decoded = decodeURIComponent(catName);
-      if (expandedCategories.has(decoded)) {
-        expandedCategories.delete(decoded);
-      } else {
-        expandedCategories.add(decoded);
-      }
-      renderMatrixTable();
-    }
-
-    function toggleYearlyCategoryExpand(catName) {
-      const decoded = decodeURIComponent(catName);
-      if (expandedYearlyCategories.has(decoded)) {
-        expandedYearlyCategories.delete(decoded);
-      } else {
-        expandedYearlyCategories.add(decoded);
-      }
-      renderYearlyMatrixTable();
-    }
-
-    function renderMatrixTable() {
-      const headRow = document.getElementById('matrix-head-row');
-      const tbody = document.getElementById('matrix-body');
-      if (!headRow || !tbody) return;
-
-      const monthsMap = new Map();
-      rawTransactions.forEach(t => {
-        if (!monthsMap.has(t.month)) {
-          monthsMap.set(t.month, {
-            label: t.month,
-            year: String(t.year),
-            monthIndex: t.monthIndex || 1
-          });
-        }
-      });
-
-      let allSortedMonths = Array.from(monthsMap.values()).sort((a, b) => {
-        if (a.year !== b.year) return parseInt(a.year) - parseInt(b.year);
-        return a.monthIndex - b.monthIndex;
-      });
-
-      const availableYears = Array.from(new Set(rawTransactions.map(t => String(t.year)))).filter(Boolean).sort().reverse();
-      const yearSelect = document.getElementById('monthly-year-select');
-      if (yearSelect && availableYears.length > 0) {
-        const curSelected = filterState.monthlyYear;
-        yearSelect.innerHTML = availableYears.map(y => `<option value="${y}" ${y === curSelected ? 'selected' : ''}>${y}</option>`).join('') + `<option value="ALL" ${curSelected === 'ALL' ? 'selected' : ''}>Alle Jare</option>`;
-      }
-
-      let displayMonths = allSortedMonths;
-      if (filterState.monthlyYear && filterState.monthlyYear !== 'ALL') {
-        displayMonths = displayMonths.filter(m => m.year === filterState.monthlyYear);
-      }
-
-      let sortedMonths = displayMonths.map(m => m.label);
-      if (filterState.month.length > 0 && !filterState.month.includes('__NONE__')) {
-        sortedMonths = sortedMonths.filter(m => filterState.month.includes(m));
-      }
-
-      let headHTML = `<th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[210px] border-r border-slate-700">Kategorie (Kliek vir Sub-tipes)</th>`;
-      sortedMonths.forEach(m => {
-        headHTML += `<th class="py-3 px-3 text-right whitespace-nowrap">${m}</th>`;
-      });
-      headHTML += `<th class="py-3 px-3 text-right font-bold bg-slate-800/60">Totaal</th>`;
-
-      if (filterState.showAverage) {
-        headHTML += `<th class="py-3 px-3 text-right font-bold col-average bg-slate-800/60">Gemiddeld</th>`;
-      }
-      if (filterState.showPercentage) {
-        headHTML += `<th class="py-3 px-3 text-right font-bold col-percentage bg-slate-800/60">%</th>`;
-      }
-      headRow.innerHTML = headHTML;
-
-      const incomeMap = {};
-      const expenseMap = {};
-      const monthlyTotalIncome = {};
-      const monthlyTotalExpense = {};
-
-      sortedMonths.forEach(m => {
-        monthlyTotalIncome[m] = 0;
-        monthlyTotalExpense[m] = 0;
-      });
-
-      filteredTransactions.forEach(t => {
-        const isInc = t.section === 'Inkomste';
-        const targetMap = isInc ? incomeMap : expenseMap;
-        const totalTarget = isInc ? monthlyTotalIncome : monthlyTotalExpense;
-        const sub = t.subtype || 'Algemeen';
-
-        if (!targetMap[t.category]) {
-          targetMap[t.category] = { total: 0, byMonth: {}, subtypes: {} };
-          sortedMonths.forEach(m => targetMap[t.category].byMonth[m] = 0);
-        }
-
-        if (!targetMap[t.category].subtypes[sub]) {
-          targetMap[t.category].subtypes[sub] = { total: 0, byMonth: {} };
-          sortedMonths.forEach(m => targetMap[t.category].subtypes[sub].byMonth[m] = 0);
-        }
-
-        if (sortedMonths.includes(t.month)) {
-          targetMap[t.category].byMonth[t.month] += t.amount;
-          targetMap[t.category].total += t.amount;
-          targetMap[t.category].subtypes[sub].byMonth[t.month] += t.amount;
-          targetMap[t.category].subtypes[sub].total += t.amount;
-          totalTarget[t.month] += t.amount;
-        }
-      });
-
-      function sortCategories(catMap) {
-        const entries = Object.entries(catMap);
-        switch (filterState.sort) {
-          case 'total_asc':
-            return entries.sort((a, b) => a[1].total - b[1].total);
-          case 'alpha_asc':
-            return entries.sort((a, b) => a[0].localeCompare(b[0]));
-          case 'alpha_desc':
-            return entries.sort((a, b) => b[0].localeCompare(a[0]));
-          case 'total_desc':
-          default:
-            return entries.sort((a, b) => b[1].total - a[1].total);
-        }
-      }
-
-      const sortedIncomeCats = sortCategories(incomeMap);
-      const sortedExpenseCats = sortCategories(expenseMap);
-
-      const grandTotalIncome = Object.values(monthlyTotalIncome).reduce((a, b) => a + b, 0);
-      const grandTotalExpense = Object.values(monthlyTotalExpense).reduce((a, b) => a + b, 0);
-      const monthCount = sortedMonths.length || 1;
-
-      let bodyHTML = '';
-
-      // INKOMSTE BANNER
-      bodyHTML += `
-        <tr class="bg-blue-950/40 text-blue-300 font-semibold border-t border-b border-blue-900/60">
-          <td colspan="${sortedMonths.length + 1 + (filterState.showAverage ? 1 : 0) + (filterState.showPercentage ? 1 : 0)}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
-            <span class="w-1.5 h-4 bg-blue-500 rounded-full inline-block"></span>
-            <span>Inkomste</span>
-          </td>
-        </tr>
-      `;
-
-      sortedIncomeCats.forEach(([catName, data]) => {
-        const avg = data.total / monthCount;
-        const pct = grandTotalIncome > 0 ? ((data.total / grandTotalIncome) * 100).toFixed(1) + '%' : '0.0%';
-        const isExpanded = expandedCategories.has(catName);
-        const subCount = Object.keys(data.subtypes).length;
-
-        bodyHTML += `
-          <tr class="hover:bg-slate-800/50 cursor-pointer select-none transition border-b border-slate-800/40" onclick="toggleCategoryExpand('${encodeURIComponent(catName)}')">
-            <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
-              <span class="text-blue-400 text-xs font-bold transition-transform duration-150 inline-block w-4">${isExpanded ? '▼' : '▸'}</span>
-              <span class="font-semibold text-white">${catName}</span>
-              ${subCount > 0 ? `<span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded border border-slate-700">${subCount}</span>` : ''}
-            </td>
-            ${sortedMonths.map(m => {
-              const val = data.byMonth[m] || 0;
-              return `<td class="py-2.5 px-3 text-right ${val > 0 ? 'text-emerald-400 font-medium' : 'text-slate-600'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
-            }).join('')}
-            <td class="py-2.5 px-3 text-right font-semibold text-emerald-400 bg-slate-800/30">${formatCurrency(data.total)}</td>
-            ${filterState.showAverage ? `<td class="py-2.5 px-3 text-right text-slate-300 col-average bg-slate-800/30">${formatCurrency(avg)}</td>` : ''}
-            ${filterState.showPercentage ? `<td class="py-2.5 px-3 text-right text-slate-300 col-percentage bg-slate-800/30">${pct}</td>` : ''}
-          </tr>
-        `;
-
-        if (isExpanded) {
-          const sortedSubs = Object.entries(data.subtypes).sort((a, b) => b[1].total - a[1].total);
-          sortedSubs.forEach(([subName, sData]) => {
-            const sAvg = sData.total / monthCount;
-            const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
-            bodyHTML += `
-              <tr class="bg-blue-950/15 hover:bg-blue-950/25 text-slate-300 text-xs border-b border-slate-800/30">
-                <td class="py-2 pl-9 pr-4 sticky left-0 bg-[#0a101d] border-r border-slate-800 text-slate-300 flex items-center gap-2">
-                  <span class="w-1.5 h-1.5 rounded-full bg-blue-400/80"></span>
-                  <span class="truncate" title="${subName}">${subName}</span>
-                </td>
-                ${sortedMonths.map(m => {
-                  const val = sData.byMonth[m] || 0;
-                  return `<td class="py-2 px-3 text-right ${val > 0 ? 'text-emerald-300/90' : 'text-slate-700'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
-                }).join('')}
-                <td class="py-2 px-3 text-right font-medium text-emerald-400/90 bg-slate-800/20">${formatCurrency(sData.total)}</td>
-                ${filterState.showAverage ? `<td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${formatCurrency(sAvg)}</td>` : ''}
-                ${filterState.showPercentage ? `<td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${sPct}</td>` : ''}
-              </tr>
-            `;
-          });
-        }
-      });
-
-      // Totaal Inkomste Ry
-      const avgTotalIncome = grandTotalIncome / monthCount;
-      bodyHTML += `
-        <tr class="bg-emerald-950/30 text-emerald-400 font-bold border-t border-b border-emerald-900/50">
-          <td class="py-3 px-4 sticky left-0 bg-[#0d1a24] text-white border-r border-emerald-900/40">Totaal Inkomste</td>
-          ${sortedMonths.map(m => `<td class="py-3 px-3 text-right">${formatCurrency(monthlyTotalIncome[m])}</td>`).join('')}
-          <td class="py-3 px-3 text-right font-extrabold">${formatCurrency(grandTotalIncome)}</td>
-          ${filterState.showAverage ? `<td class="py-3 px-3 text-right col-average">${formatCurrency(avgTotalIncome)}</td>` : ''}
-          ${filterState.showPercentage ? `<td class="py-3 px-3 text-right col-percentage">100.0%</td>` : ''}
-        </tr>
-      `;
-
-      // UITGAWES BANNER
-      bodyHTML += `
-        <tr class="bg-rose-950/40 text-rose-300 font-semibold border-t border-b border-rose-900/60">
-          <td colspan="${sortedMonths.length + 1 + (filterState.showAverage ? 1 : 0) + (filterState.showPercentage ? 1 : 0)}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
-            <span class="w-1.5 h-4 bg-rose-500 rounded-full inline-block"></span>
-            <span>Uitgawes</span>
-          </td>
-        </tr>
-      `;
-
-      sortedExpenseCats.forEach(([catName, data]) => {
-        const avg = data.total / monthCount;
-        const pct = grandTotalExpense > 0 ? ((data.total / grandTotalExpense) * 100).toFixed(1) + '%' : '0.0%';
-        const isExpanded = expandedCategories.has(catName);
-        const subCount = Object.keys(data.subtypes).length;
-
-        bodyHTML += `
-          <tr class="hover:bg-slate-800/50 cursor-pointer select-none transition border-b border-slate-800/40" onclick="toggleCategoryExpand('${encodeURIComponent(catName)}')">
-            <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
-              <span class="text-rose-400 text-xs font-bold transition-transform duration-150 inline-block w-4">${isExpanded ? '▼' : '▸'}</span>
-              <span class="font-semibold text-white">${catName}</span>
-              ${subCount > 0 ? `<span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded border border-slate-700">${subCount}</span>` : ''}
-            </td>
-            ${sortedMonths.map(m => {
-              const val = data.byMonth[m] || 0;
-              return `<td class="py-2.5 px-3 text-right text-slate-200">${val > 0 ? formatCurrency(val) : '—'}</td>`;
-            }).join('')}
-            <td class="py-2.5 px-3 text-right font-semibold text-rose-400 bg-slate-800/30">${formatCurrency(data.total)}</td>
-            ${filterState.showAverage ? `<td class="py-2.5 px-3 text-right text-slate-300 col-average bg-slate-800/30">${formatCurrency(avg)}</td>` : ''}
-            ${filterState.showPercentage ? `<td class="py-2.5 px-3 text-right text-slate-300 col-percentage bg-slate-800/30">${pct}</td>` : ''}
-          </tr>
-        `;
-
-        if (isExpanded) {
-          const sortedSubs = Object.entries(data.subtypes).sort((a, b) => b[1].total - a[1].total);
-          sortedSubs.forEach(([subName, sData]) => {
-            const sAvg = sData.total / monthCount;
-            const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
-            bodyHTML += `
-              <tr class="bg-rose-950/15 hover:bg-rose-950/25 text-slate-300 text-xs border-b border-slate-800/30">
-                <td class="py-2 pl-9 pr-4 sticky left-0 bg-[#160c12] border-r border-slate-800 text-slate-300 flex items-center gap-2">
-                  <span class="w-1.5 h-1.5 rounded-full bg-rose-400/80"></span>
-                  <span class="truncate" title="${subName}">${subName}</span>
-                </td>
-                ${sortedMonths.map(m => {
-                  const val = sData.byMonth[m] || 0;
-                  return `<td class="py-2 px-3 text-right ${val > 0 ? 'text-slate-300' : 'text-slate-700'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
-                }).join('')}
-                <td class="py-2 px-3 text-right font-medium text-rose-300/90 bg-slate-800/20">${formatCurrency(sData.total)}</td>
-                ${filterState.showAverage ? `<td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${formatCurrency(sAvg)}</td>` : ''}
-                ${filterState.showPercentage ? `<td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${sPct}</td>` : ''}
-              </tr>
-            `;
-          });
-        }
-      });
-
-      // Totaal Uitgawes Ry
-      const avgTotalExpense = grandTotalExpense / monthCount;
-      bodyHTML += `
-        <tr class="bg-amber-950/30 text-amber-400 font-bold border-t border-b border-amber-900/50">
-          <td class="py-3 px-4 sticky left-0 bg-[#1c1410] text-amber-200 border-r border-amber-900/40">Totaal Uitgawes</td>
-          ${sortedMonths.map(m => `<td class="py-3 px-3 text-right">${formatCurrency(monthlyTotalExpense[m])}</td>`).join('')}
-          <td class="py-3 px-3 text-right font-extrabold">${formatCurrency(grandTotalExpense)}</td>
-          ${filterState.showAverage ? `<td class="py-3 px-3 text-right col-average">${formatCurrency(avgTotalExpense)}</td>` : ''}
-          ${filterState.showPercentage ? `<td class="py-3 px-3 text-right col-percentage">100.0%</td>` : ''}
-        </tr>
-      `;
-
-      // NETTO RY
-      const grandNet = grandTotalIncome - grandTotalExpense;
-      const avgNet = grandNet / monthCount;
-      bodyHTML += `
-        <tr class="bg-slate-900/90 text-white font-extrabold border-t-2 border-slate-700 text-sm">
-          <td class="py-3.5 px-4 sticky left-0 bg-[#0f172a] text-emerald-300 border-r border-slate-700">Netto (Inkomste – Uitgawes)</td>
-          ${sortedMonths.map(m => {
-            const net = monthlyTotalIncome[m] - monthlyTotalExpense[m];
-            const isPos = net >= 0;
-            return `<td class="py-3.5 px-3 text-right ${isPos ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(net)}</td>`;
-          }).join('')}
-          <td class="py-3.5 px-3 text-right font-black ${grandNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(grandNet)}</td>
-          ${filterState.showAverage ? `<td class="py-3.5 px-3 text-right col-average font-black ${avgNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(avgNet)}</td>` : ''}
-          ${filterState.showPercentage ? `<td class="py-3.5 px-3 text-right text-slate-500 col-percentage">—</td>` : ''}
-        </tr>
-      `;
-
-      tbody.innerHTML = bodyHTML;
-    }
-
-    function renderYearlyMatrixTable() {
-      const headRow = document.getElementById('yearly-head-row');
-      const tbody = document.getElementById('yearly-matrix-body');
-      const warningBox = document.getElementById('overlap-warning-box');
-      const warningList = document.getElementById('overlap-warning-list');
-      if (!headRow || !tbody) return;
-
-      const allYears = Array.from(new Set(rawTransactions.map(t => String(t.year)))).filter(Boolean).sort();
-      let activeYears = allYears;
-
-      if (filterState.yearlyYears && filterState.yearlyYears.length > 0 && !filterState.yearlyYears.includes('__NONE__')) {
-        activeYears = allYears.filter(y => filterState.yearlyYears.includes(y));
-      }
-
-      const yearlyFilteredTransactions = rawTransactions.filter(item => {
-        for (const def of filterDefinitions) {
-          if (def.key === 'year') continue;
-          const selected = filterState[def.key];
-          if (selected && selected.length > 0) {
-            if (selected.includes('__NONE__')) return false;
-            if (!selected.includes(item[def.prop])) return false;
-          }
-        }
-        return activeYears.includes(item.year);
-      });
-
-      const incomeCatSet = new Set();
-      const expenseCatSet = new Set();
-      yearlyFilteredTransactions.forEach(t => {
-        if (t.section === 'Inkomste') incomeCatSet.add(t.category);
-        else expenseCatSet.add(t.category);
-      });
-
-      const overlaps = Array.from(incomeCatSet).filter(cat => expenseCatSet.has(cat));
-      if (overlaps.length > 0 && warningBox && warningList) {
-        warningBox.classList.remove('hidden');
-        warningList.innerHTML = overlaps.map(cat => {
-          const matching = yearlyFilteredTransactions.filter(t => t.category === cat && t.section === 'Uitgawes');
-          const count = matching.length;
-          const sampleId = matching[0]?.id || '7803';
-          return `<li><span class="font-semibold">${cat}</span>: ${count} transaksies verskyn onder Uitgawes (Sheet rye: ${sampleId})</li>`;
-        }).join('');
-      } else if (warningBox) {
-        warningBox.classList.add('hidden');
-      }
-
-      let headHTML = `<th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[210px] border-r border-slate-700">Kategorie (Kliek vir Sub-tipes)</th>`;
-      activeYears.forEach(y => {
-        headHTML += `<th class="py-3 px-3 text-right whitespace-nowrap">${y}</th>`;
-      });
-      headHTML += `<th class="py-3 px-3 text-right font-bold bg-slate-800/60">Totaal</th>`;
-      headHTML += `<th class="py-3 px-3 text-right font-bold bg-slate-800/60">Gemiddeld</th>`;
-      headHTML += `<th class="py-3 px-3 text-right font-bold bg-slate-800/60">%</th>`;
-      headRow.innerHTML = headHTML;
-
-      const incomeMap = {};
-      const expenseMap = {};
-      const yearlyTotalIncome = {};
-      const yearlyTotalExpense = {};
-
-      activeYears.forEach(y => {
-        yearlyTotalIncome[y] = 0;
-        yearlyTotalExpense[y] = 0;
-      });
-
-      yearlyFilteredTransactions.forEach(t => {
-        const isInc = t.section === 'Inkomste';
-        const targetMap = isInc ? incomeMap : expenseMap;
-        const totalTarget = isInc ? yearlyTotalIncome : yearlyTotalExpense;
-        const sub = t.subtype || 'Algemeen';
-
-        if (!targetMap[t.category]) {
-          targetMap[t.category] = { total: 0, byYear: {}, subtypes: {} };
-          activeYears.forEach(y => targetMap[t.category].byYear[y] = 0);
-        }
-
-        if (!targetMap[t.category].subtypes[sub]) {
-          targetMap[t.category].subtypes[sub] = { total: 0, byYear: {} };
-          activeYears.forEach(y => targetMap[t.category].subtypes[sub].byYear[y] = 0);
-        }
-
-        if (activeYears.includes(t.year)) {
-          targetMap[t.category].byYear[t.year] += t.amount;
-          targetMap[t.category].total += t.amount;
-          targetMap[t.category].subtypes[sub].byYear[t.year] += t.amount;
-          targetMap[t.category].subtypes[sub].total += t.amount;
-          totalTarget[t.year] += t.amount;
-        }
-      });
-
-      const grandTotalIncome = Object.values(yearlyTotalIncome).reduce((a, b) => a + b, 0);
-      const grandTotalExpense = Object.values(yearlyTotalExpense).reduce((a, b) => a + b, 0);
-      const yearCount = activeYears.length || 1;
-
-      const sortedIncomeCats = Object.entries(incomeMap).sort((a, b) => b[1].total - a[1].total);
-      const sortedExpenseCats = Object.entries(expenseMap).sort((a, b) => b[1].total - a[1].total);
-
-      let bodyHTML = '';
-
-      // INKOMSTE BANNER
-      bodyHTML += `
-        <tr class="bg-blue-950/40 text-blue-300 font-semibold border-t border-b border-blue-900/60">
-          <td colspan="${activeYears.length + 4}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
-            <span class="w-1.5 h-4 bg-blue-500 rounded-full inline-block"></span>
-            <span>Inkomste</span>
-          </td>
-        </tr>
-      `;
-
-      sortedIncomeCats.forEach(([catName, data]) => {
-        const avg = data.total / yearCount;
-        const pct = grandTotalIncome > 0 ? ((data.total / grandTotalIncome) * 100).toFixed(1) + '%' : '0.0%';
-        const isExpanded = expandedYearlyCategories.has(catName);
-        const subCount = Object.keys(data.subtypes).length;
-
-        bodyHTML += `
-          <tr class="hover:bg-slate-800/50 cursor-pointer select-none transition border-b border-slate-800/40" onclick="toggleYearlyCategoryExpand('${encodeURIComponent(catName)}')">
-            <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
-              <span class="text-blue-400 text-xs font-bold transition-transform duration-150 inline-block w-4">${isExpanded ? '▼' : '▸'}</span>
-              <span class="font-semibold text-white">${catName}</span>
-              ${subCount > 0 ? `<span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded border border-slate-700">${subCount}</span>` : ''}
-            </td>
-            ${activeYears.map(y => {
-              const val = data.byYear[y] || 0;
-              return `<td class="py-2.5 px-3 text-right ${val > 0 ? 'text-emerald-400 font-medium' : 'text-slate-600'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
-            }).join('')}
-            <td class="py-2.5 px-3 text-right font-semibold text-emerald-400 bg-slate-800/30">${formatCurrency(data.total)}</td>
-            <td class="py-2.5 px-3 text-right text-slate-300 bg-slate-800/30">${formatCurrency(avg)}</td>
-            <td class="py-2.5 px-3 text-right text-slate-300 bg-slate-800/30">${pct}</td>
-          </tr>
-        `;
-
-        if (isExpanded) {
-          const sortedSubs = Object.entries(data.subtypes).sort((a, b) => b[1].total - a[1].total);
-          sortedSubs.forEach(([subName, sData]) => {
-            const sAvg = sData.total / yearCount;
-            const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
-            bodyHTML += `
-              <tr class="bg-blue-950/15 hover:bg-blue-950/25 text-slate-300 text-xs border-b border-slate-800/30">
-                <td class="py-2 pl-9 pr-4 sticky left-0 bg-[#0a101d] border-r border-slate-800 text-slate-300 flex items-center gap-2">
-                  <span class="w-1.5 h-1.5 rounded-full bg-blue-400/80"></span>
-                  <span class="truncate" title="${subName}">${subName}</span>
-                </td>
-                ${activeYears.map(y => {
-                  const val = sData.byYear[y] || 0;
-                  return `<td class="py-2 px-3 text-right ${val > 0 ? 'text-emerald-300/90' : 'text-slate-700'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
-                }).join('')}
-                <td class="py-2 px-3 text-right font-medium text-emerald-400/90 bg-slate-800/20">${formatCurrency(sData.total)}</td>
-                <td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${formatCurrency(sAvg)}</td>
-                <td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${sPct}</td>
-              </tr>
-            `;
-          });
-        }
-      });
-
-      // Totaal Inkomste Ry
-      const avgTotalIncome = grandTotalIncome / yearCount;
-      bodyHTML += `
-        <tr class="bg-emerald-950/30 text-emerald-400 font-bold border-t border-b border-emerald-900/50">
-          <td class="py-3 px-4 sticky left-0 bg-[#0d1a24] text-white border-r border-emerald-900/40">Totaal Inkomste</td>
-          ${activeYears.map(y => `<td class="py-3 px-3 text-right">${formatCurrency(yearlyTotalIncome[y])}</td>`).join('')}
-          <td class="py-3 px-3 text-right font-extrabold">${formatCurrency(grandTotalIncome)}</td>
-          <td class="py-3 px-3 text-right">${formatCurrency(avgTotalIncome)}</td>
-          <td class="py-3 px-3 text-right">100.0%</td>
-        </tr>
-      `;
-
-      // UITGAWES BANNER
-      bodyHTML += `
-        <tr class="bg-rose-950/40 text-rose-300 font-semibold border-t border-b border-rose-900/60">
-          <td colspan="${activeYears.length + 4}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
-            <span class="w-1.5 h-4 bg-rose-500 rounded-full inline-block"></span>
-            <span>Uitgawes</span>
-          </td>
-        </tr>
-      `;
-
-      sortedExpenseCats.forEach(([catName, data]) => {
-        const avg = data.total / yearCount;
-        const pct = grandTotalExpense > 0 ? ((data.total / grandTotalExpense) * 100).toFixed(1) + '%' : '0.0%';
-        const isExpanded = expandedYearlyCategories.has(catName);
-        const subCount = Object.keys(data.subtypes).length;
-
-        bodyHTML += `
-          <tr class="hover:bg-slate-800/50 cursor-pointer select-none transition border-b border-slate-800/40" onclick="toggleYearlyCategoryExpand('${encodeURIComponent(catName)}')">
-            <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
-              <span class="text-rose-400 text-xs font-bold transition-transform duration-150 inline-block w-4">${isExpanded ? '▼' : '▸'}</span>
-              <span class="font-semibold text-white">${catName}</span>
-              ${subCount > 0 ? `<span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded border border-slate-700">${subCount}</span>` : ''}
-            </td>
-            ${activeYears.map(y => {
-              const val = data.byYear[y] || 0;
-              return `<td class="py-2.5 px-3 text-right text-slate-200">${val > 0 ? formatCurrency(val) : '—'}</td>`;
-            }).join('')}
-            <td class="py-2.5 px-3 text-right font-semibold text-rose-400 bg-slate-800/30">${formatCurrency(data.total)}</td>
-            <td class="py-2.5 px-3 text-right text-slate-300 bg-slate-800/30">${formatCurrency(avg)}</td>
-            <td class="py-2.5 px-3 text-right text-slate-300 bg-slate-800/30">${pct}</td>
-          </tr>
-        `;
-
-        if (isExpanded) {
-          const sortedSubs = Object.entries(data.subtypes).sort((a, b) => b[1].total - a[1].total);
-          sortedSubs.forEach(([subName, sData]) => {
-            const sAvg = sData.total / yearCount;
-            const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
-            bodyHTML += `
-              <tr class="bg-rose-950/15 hover:bg-rose-950/25 text-slate-300 text-xs border-b border-slate-800/30">
-                <td class="py-2 pl-9 pr-4 sticky left-0 bg-[#160c12] border-r border-slate-800 text-slate-300 flex items-center gap-2">
-                  <span class="w-1.5 h-1.5 rounded-full bg-rose-400/80"></span>
-                  <span class="truncate" title="${subName}">${subName}</span>
-                </td>
-                ${activeYears.map(y => {
-                  const val = sData.byYear[y] || 0;
-                  return `<td class="py-2 px-3 text-right ${val > 0 ? 'text-slate-300' : 'text-slate-700'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
-                }).join('')}
-                <td class="py-2 px-3 text-right font-medium text-rose-300/90 bg-slate-800/20">${formatCurrency(sData.total)}</td>
-                <td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${formatCurrency(sAvg)}</td>
-                <td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${sPct}</td>
-              </tr>
-            `;
-          });
-        }
-      });
-
-      // Totaal Uitgawes Ry
-      const avgTotalExpense = grandTotalExpense / yearCount;
-      bodyHTML += `
-        <tr class="bg-amber-950/30 text-amber-400 font-bold border-t border-b border-amber-900/50">
-          <td class="py-3 px-4 sticky left-0 bg-[#1c1410] text-amber-200 border-r border-amber-900/40">Totaal Uitgawes</td>
-          ${activeYears.map(y => `<td class="py-3 px-3 text-right">${formatCurrency(yearlyTotalExpense[y])}</td>`).join('')}
-          <td class="py-3 px-3 text-right font-extrabold">${formatCurrency(grandTotalExpense)}</td>
-          <td class="py-3 px-3 text-right">${formatCurrency(avgTotalExpense)}</td>
-          <td class="py-3 px-3 text-right">100.0%</td>
-        </tr>
-      `;
-
-      // NETTO RY
-      const grandNet = grandTotalIncome - grandTotalExpense;
-      const avgNet = grandNet / yearCount;
-      bodyHTML += `
-        <tr class="bg-slate-900/90 text-white font-extrabold border-t-2 border-slate-700 text-sm">
-          <td class="py-3.5 px-4 sticky left-0 bg-[#0f172a] text-emerald-300 border-r border-slate-700">Netto (Inkomste – Uitgawes)</td>
-          ${activeYears.map(y => {
-            const net = yearlyTotalIncome[y] - yearlyTotalExpense[y];
-            const isPos = net >= 0;
-            return `<td class="py-3.5 px-3 text-right ${isPos ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(net)}</td>`;
-          }).join('')}
-          <td class="py-3.5 px-3 text-right font-black ${grandNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(grandNet)}</td>
-          <td class="py-3.5 px-3 text-right font-black ${avgNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(avgNet)}</td>
-          <td class="py-3.5 px-3 text-right text-slate-500">—</td>
-        </tr>
-      `;
-
-      tbody.innerHTML = bodyHTML;
-      updateYearlyFilterPanel(allYears);
-    }
-
-    function updateYearlyFilterPanel(allYears) {
-      const panel = document.getElementById('yearly-filter-panel');
-      const label = document.getElementById('yearly-filter-label');
-      const btn = document.getElementById('yearly-filter-btn');
-      if (!panel || !label || !btn) return;
-
-      const selected = filterState.yearlyYears;
-      if (!selected || selected.length === 0) {
-        label.textContent = 'Jaar: Alles';
-      } else if (selected.includes('__NONE__')) {
-        label.textContent = 'Jaar: 0 gekies';
-      } else {
-        label.textContent = `Jaar: ${selected.length} gekies`;
-      }
-
-      panel.innerHTML = `
-        <div class="space-y-2">
-          <div class="flex items-center justify-between text-[11px] text-blue-400 pb-1 border-b border-slate-800">
-            <button id="yearly-select-all" class="hover:underline">Kies Alles</button>
-            <button id="yearly-deselect-all" class="hover:underline text-slate-400">Maak Skoon</button>
-          </div>
-          <div class="max-h-48 overflow-y-auto space-y-1 text-xs">
-            ${allYears.map(y => {
-              const isChecked = selected.length === 0 || selected.includes(y);
-              return `
-                <label class="flex items-center gap-2 p-1 rounded hover:bg-slate-800/80 cursor-pointer text-slate-200">
-                  <input type="checkbox" value="${y}" ${isChecked ? 'checked' : ''} class="yearly-item-checkbox rounded text-blue-600 bg-slate-800 border-slate-700">
-                  <span>${y}</span>
-                </label>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
-
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        panel.classList.toggle('hidden');
-      };
-
-      const selectAllBtn = panel.querySelector('#yearly-select-all');
-      if (selectAllBtn) {
-        selectAllBtn.onclick = () => {
-          filterState.yearlyYears = [];
-          saveStateToUrl();
-          renderYearlyMatrixTable();
-        };
-      }
-
-      const deselectAllBtn = panel.querySelector('#yearly-deselect-all');
-      if (deselectAllBtn) {
-        deselectAllBtn.onclick = () => {
-          filterState.yearlyYears = ['__NONE__'];
-          saveStateToUrl();
-          renderYearlyMatrixTable();
-        };
-      }
-
-      panel.querySelectorAll('.yearly-item-checkbox').forEach(chk => {
-        chk.onchange = () => {
-          const checked = Array.from(panel.querySelectorAll('.yearly-item-checkbox:checked')).map(c => c.value);
-          if (checked.length === allYears.length || checked.length === 0) {
-            filterState.yearlyYears = [];
-          } else {
-            filterState.yearlyYears = checked;
-          }
-          saveStateToUrl();
-          renderYearlyMatrixTable();
-        };
-      });
-    }
-
-    function renderAccountBalanceCharts() {
-      const barCanvas = document.getElementById('chart-balance-bars');
-      const lineCanvas = document.getElementById('chart-total-balance-line');
-      if (!barCanvas || !lineCanvas) return;
-
-      // Bou lys van rekeninge
-      const accounts = Array.from(new Set(rawTransactions.map(t => t.account))).filter(Boolean).sort();
-      const barAccSelect = document.getElementById('balance-bar-account-select');
-      const lineAccSelect = document.getElementById('balance-line-account-select');
-
-      if (barAccSelect && barAccSelect.options.length <= 1) {
-        accounts.forEach(acc => {
-          const opt1 = new Option(acc, acc);
-          const opt2 = new Option(acc, acc);
-          barAccSelect.add(opt1);
-          lineAccSelect.add(opt2);
-        });
-        barAccSelect.value = filterState.balanceAccount;
-        lineAccSelect.value = filterState.balanceAccount;
-      }
-
-      // Versamel chronologiese maande met hul laaste sluitingsaldo
-      const monthsMap = new Map();
-      rawTransactions.forEach(t => {
-        if (!monthsMap.has(t.month)) {
-          monthsMap.set(t.month, {
-            label: t.month,
-            year: parseInt(t.year) || 2026,
-            monthIndex: t.monthIndex || 1
-          });
-        }
-      });
-
-      let allMonths = Array.from(monthsMap.values()).sort((a, b) => {
-        if (a.year !== b.year) return a.year - b.year;
-        return a.monthIndex - b.monthIndex;
-      });
-
-      // Beperk volgens aantal maande gekies
-      if (filterState.balanceMonths !== 'ALL') {
-        const count = parseInt(filterState.balanceMonths) || 12;
-        allMonths = allMonths.slice(-count);
-      }
-
-      const labels = allMonths.map(m => m.label);
-
-      // Bereken maandelikse saldo
-      const balances = labels.map(mLabel => {
-        let matching = rawTransactions.filter(t => t.month === mLabel);
-        if (filterState.balanceAccount !== 'ALL') {
-          matching = matching.filter(t => t.account === filterState.balanceAccount);
-        }
-        if (matching.length === 0) return 11990000;
-        return matching[matching.length - 1].balance || 11990000;
-      });
-
-      // 1. Staafgrafiek (Saldo per rekening)
-      if (barChartInstance) barChartInstance.destroy();
-      const ctxBar = barCanvas.getContext('2d');
-      barChartInstance = new Chart(ctxBar, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            data: balances,
-            backgroundColor: '#3b82f6',
-            borderRadius: 4,
-            barThickness: 14,
-            maxBarThickness: 18
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => ` Saldo: ${formatCurrency(ctx.parsed.y)}`
-              }
-            }
-          },
-          scales: {
-            x: {
-              grid: { display: false },
-              ticks: { color: '#94a3b8', font: { size: 11 } }
-            },
-            y: {
-              display: false,
-              grid: { display: false }
-            }
-          }
-        }
-      });
-
-      // 2. Areagrafiek / Tendenslyn (Totale saldo)
-      if (lineChartInstance) lineChartInstance.destroy();
-      const ctxLine = lineCanvas.getContext('2d');
-      const gradient = ctxLine.createLinearGradient(0, 0, 0, 240);
-      gradient.addColorStop(0, 'rgba(59, 130, 246, 0.45)');
-      gradient.addColorStop(1, 'rgba(59, 130, 246, 0.02)');
-
-      const latestBalance = balances[balances.length - 1] || 11990629;
-
-      lineChartInstance = new Chart(ctxLine, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            data: balances,
-            borderColor: '#3b82f6',
-            borderWidth: 2.5,
-            fill: true,
-            backgroundColor: gradient,
-            tension: 0.35,
-            pointBackgroundColor: '#60a5fa',
-            pointBorderColor: '#1e3a8a',
-            pointRadius: 4,
-            pointHoverRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => ` Totale Saldo: ${formatCurrency(ctx.parsed.y)}`
-              }
-            }
-          },
-          scales: {
-            x: {
-              grid: { color: 'rgba(51, 65, 85, 0.3)' },
-              ticks: { color: '#94a3b8', font: { size: 11 } }
-            },
-            y: {
-              grid: { color: 'rgba(51, 65, 85, 0.3)' },
-              ticks: {
-                color: '#94a3b8',
-                font: { size: 11 },
-                callback: (val) => formatCurrency(val)
-              }
-            }
-          }
-        }
-      });
-    }
-
-    function applyFiltersAndRender() {
-      try {
-        applyFilters();
-        renderSummaryKPIs();
-        renderMatrixTable();
-        renderYearlyMatrixTable();
-        renderAccountBalanceCharts();
-        updateFilterButtonLabels();
-      } catch (err) {
-        console.error('Fout tydens vertoon van data:', err);
-      }
-    }
-
-    function setupEventListeners() {
-      // Herstel Filters Knoppie
-      document.getElementById('btn-reset-filters').onclick = () => {
-        filterDefinitions.forEach(d => filterState[d.key] = []);
-        filterState.yearlyYears = [];
-        expandedCategories.clear();
-        expandedYearlyCategories.clear();
-        window.history.replaceState(null, '', window.location.pathname);
-        applyFiltersAndRender();
-        showToast('Alle filters is herstel.');
-      };
-
-      // Toegewyde Jaar Kieser vir Maandelikse Tabel
-      const monthlyYearSelect = document.getElementById('monthly-year-select');
-      if (monthlyYearSelect) {
-        monthlyYearSelect.onchange = (e) => {
-          filterState.monthlyYear = e.target.value;
-          saveStateToUrl();
-          renderMatrixTable();
-        };
-      }
-
-      // Wys Gemiddeld checkbox
-      document.getElementById('chk-show-average').onchange = (e) => {
-        filterState.showAverage = e.target.checked;
-        saveStateToUrl();
-        renderMatrixTable();
-      };
-
-      // Wys % checkbox
-      document.getElementById('chk-show-percentage').onchange = (e) => {
-        filterState.showPercentage = e.target.checked;
-        saveStateToUrl();
-        renderMatrixTable();
-      };
-
-      // Sorteer keuse
-      document.getElementById('select-sort').onchange = (e) => {
-        filterState.sort = e.target.value;
-        saveStateToUrl();
-        renderMatrixTable();
-      };
-
-      // Balans rekening keuse (Staafgrafiek & Lyn)
-      document.getElementById('balance-bar-account-select').onchange = (e) => {
-        filterState.balanceAccount = e.target.value;
-        document.getElementById('balance-line-account-select').value = e.target.value;
-        saveStateToUrl();
-        renderAccountBalanceCharts();
-      };
-
-      document.getElementById('balance-line-account-select').onchange = (e) => {
-        filterState.balanceAccount = e.target.value;
-        document.getElementById('balance-bar-account-select').value = e.target.value;
-        saveStateToUrl();
-        renderAccountBalanceCharts();
-      };
-
-      // Balans maand bestek
-      document.getElementById('balance-bar-month-range').onchange = (e) => {
-        filterState.balanceMonths = e.target.value;
-        document.getElementById('balance-line-month-range').value = e.target.value;
-        saveStateToUrl();
-        renderAccountBalanceCharts();
-      };
-
-      document.getElementById('balance-line-month-range').onchange = (e) => {
-        filterState.balanceMonths = e.target.value;
-        document.getElementById('balance-bar-month-range').value = e.target.value;
-        saveStateToUrl();
-        renderAccountBalanceCharts();
-      };
-
-      // Verfris Knoppie
-      document.getElementById('btn-refresh-data').onclick = () => {
-        fetchGoogleSheetData();
-      };
-
-      // Tema Wisselaar
-      document.getElementById('theme-toggle-btn').onclick = () => {
-        document.documentElement.classList.toggle('dark');
-        showToast(document.documentElement.classList.contains('dark') ? 'Donker modus geaktiveer' : 'Lig modus geaktiveer');
-      };
-
-      // Instellings Modal oop/toe
-      const modal = document.getElementById('settings-modal');
-      document.getElementById('btn-open-settings').onclick = () => {
-        document.getElementById('setting-sheet-id').value = APP_CONFIG.sheetId;
-        document.getElementById('setting-sheet-name').value = APP_CONFIG.sheetName;
-        document.getElementById('setting-apps-script-url').value = APP_CONFIG.appsScriptUrl;
-        modal.classList.remove('hidden');
-      };
-
-      const closeModal = () => modal.classList.add('hidden');
-      document.getElementById('btn-close-settings').onclick = closeModal;
-      document.getElementById('btn-cancel-settings').onclick = closeModal;
-
-      document.getElementById('btn-save-settings').onclick = () => {
-        APP_CONFIG.sheetId = document.getElementById('setting-sheet-id').value.trim() || APP_CONFIG.defaultSheetId;
-        APP_CONFIG.sheetName = document.getElementById('setting-sheet-name').value.trim();
-        APP_CONFIG.appsScriptUrl = document.getElementById('setting-apps-script-url').value.trim();
-        closeModal();
-        saveStateToUrl();
-        fetchGoogleSheetData();
-      };
-
-      // Plaaslike CSV Oplaai
-      document.getElementById('file-csv-upload').onchange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          parseAndLoadCsv(event.target.result, false);
-          closeModal();
-        };
-        reader.readAsText(file);
-      };
-
-      const bannerUpload = document.getElementById('banner-csv-upload');
-      if (bannerUpload) {
-        bannerUpload.onchange = (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            parseAndLoadCsv(event.target.result, false);
-          };
-          reader.readAsText(file);
-        };
-      }
-
-      const bannerSettingsBtn = document.getElementById('btn-banner-settings');
-      if (bannerSettingsBtn) {
-        bannerSettingsBtn.onclick = () => {
-          document.getElementById('btn-open-settings').click();
-        };
-      }
-    }
-
-    function parseAndLoadCsv(text, isAutoFetch = false) {
-      const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
-      if (lines.length < 2) return;
-      const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
-
-      const items = [];
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-        const dStr = cols[headers.findIndex(h => h.includes('dat')) !== -1 ? headers.findIndex(h => h.includes('dat')) : 0] || '2026-01-01';
-        const cat = cols[headers.findIndex(h => h.includes('kat') || h.includes('cat')) !== -1 ? headers.findIndex(h => h.includes('kat') || h.includes('cat')) : 1] || 'Ander';
-        const amt = parseFloat(cols[headers.findIndex(h => h.includes('bed') || h.includes('amou')) !== -1 ? headers.findIndex(h => h.includes('bed') || h.includes('amou')) : 2]) || 0;
-        const acc = cols[headers.findIndex(h => h.includes('rek') || h.includes('acc')) !== -1 ? headers.findIndex(h => h.includes('rek') || h.includes('acc')) : 3] || 'Hoofrekening';
-        const type = cols[headers.findIndex(h => h.includes('tip') || h.includes('type')) !== -1 ? headers.findIndex(h => h.includes('tip') || h.includes('type')) : 4] || 'Expense';
-        const sub = cols[headers.findIndex(h => h.includes('sub') || h.includes('beskry') || h.includes('desc')) !== -1 ? headers.findIndex(h => h.includes('sub') || h.includes('beskry') || h.includes('desc')) : 5] || 'Algemeen';
-        const bank = cols[headers.findIndex(h => h.includes('bank')) !== -1 ? headers.findIndex(h => h.includes('bank')) : 6] || 'FNB';
-        const bal = parseFloat(cols[headers.findIndex(h => h.includes('bal') || h.includes('sal')) !== -1 ? headers.findIndex(h => h.includes('bal') || h.includes('sal')) : 7]) || 0;
-
-        const d = new Date(dStr);
-        const mIdx = isNaN(d.getTime()) ? 0 : d.getMonth();
-        const yr = isNaN(d.getTime()) ? '2026' : String(d.getFullYear());
-
-        items.push({
-          id: i,
-          date: dStr,
-          year: yr,
-          month: `${MONTH_NAMES_AF[mIdx]} '${yr.slice(-2)}`,
-          monthIndex: mIdx + 1,
-          section: type.toLowerCase().includes('income') || type.toLowerCase().includes('inkomste') ? 'Inkomste' : 'Uitgawes',
-          category: cat,
-          subtype: sub,
-          amount: Math.abs(amt),
-          account: acc,
-          bank: bank,
-          type: type,
-          taxYear: `${yr}/${parseInt(yr) + 1}`,
-          taxPeriod: 'P1',
-          balance: bal
-        });
-      }
-
-      if (items.length > 0) {
-        rawTransactions = items;
-        try {
-          localStorage.setItem('fin_dashboard_data', JSON.stringify(rawTransactions));
-        } catch (e) {}
-        document.getElementById('total-tx-count').textContent = items.length.toLocaleString('af-ZA');
-        document.getElementById('connection-status-banner').classList.add('hidden');
-        applyFiltersAndRender();
-        if (!isAutoFetch) {
-          showToast(`${items.length} transaksies suksesvol gelaai en gestoor!`);
-        }
-      }
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      loadStateFromUrl();
-      setupDropdownPanels();
-      setupEventListeners();
-      fetchGoogleSheetData();
-    });
-  </script>
-</body>
-</html>
+  <div class="w-full h-64 sm:h-72 pt-2 relative">
+    <canvas id="chart-total-balance-line"></canvas>
+  </div>
+</section>
+
+
+  <div class="space-y-4 text-xs sm:text-sm text-slate-300">
+    <div>
+      <label class="block font-medium text-slate-200 mb-1">Google Sheet ID</label>
+      <input type="text" id="setting-sheet-id" value="1LBOKvSIfIu4pbEgbxT2sedjs_24oYR5b_FxOZAKHTuk" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
+      <p class="text-[11px] text-slate-400 mt-1">Maak seker die blad is gedeel met: <em>"Enigiemand met die skakel kan bekyk"</em>.</p>
+    </div>
+
+    <div>
+      <label class="block font-medium text-slate-200 mb-1">Werkblad / Blad Naam (Opsioneel)</label>
+      <input type="text" id="setting-sheet-name" placeholder="bv. Sheet1" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
+    </div>
+
+    <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+      <span class="text-xs text-slate-400">Of laai 'n CSV-uitvoer direk:</span>
+      <label class="cursor-pointer inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs">
+        <span>Kies CSV Lêer</span>
+        <input type="file" id="file-csv-upload" accept=".csv" class="hidden">
+      </label>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+    <button id="btn-cancel-settings" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm">Kanselleer</button>
+    <button id="btn-save-settings" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs sm:text-sm">Stoor &amp; Laai Data</button>
+  </div>
+</div>
