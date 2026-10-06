@@ -35,7 +35,6 @@
   </script>
 
   <style>
-    /* Ingeboude basisreëls sodat die tema nooit breek nie */
     html, body {
       background-color: #0b0f19 !important;
       color: #f1f5f9 !important;
@@ -48,7 +47,6 @@
       vertical-align: middle;
       flex-shrink: 0;
     }
-    /* Pasgemaakte rolstawe vir tabelle en dropdowns */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -90,14 +88,12 @@
 
       <!-- Knoppies regs bo -->
       <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-        <!-- Tema Wisselaar -->
         <button id="theme-toggle-btn" title="Skakel Donker/Lig modus" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
           <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
           </svg>
         </button>
 
-        <!-- Instellings Knoppie -->
         <button id="btn-open-settings" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs sm:text-sm font-medium transition shadow-sm">
           <svg style="width:16px;height:16px;" class="text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
@@ -106,7 +102,6 @@
           <span>Instellings</span>
         </button>
 
-        <!-- Verfris Knoppie -->
         <button id="btn-refresh-data" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/90 hover:bg-blue-600 text-white text-xs sm:text-sm font-medium transition shadow-sm">
           <svg id="refresh-spinner" style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -118,9 +113,17 @@
 
     <!-- Filter Paneel -->
     <section class="bg-slate-900/60 p-3 sm:p-4 rounded-xl border border-slate-800 space-y-3">
-      <!-- Reeks Dropdown Knoppies (Multi-kies filters) -->
       <div class="flex flex-wrap items-center gap-2" id="filter-buttons-container">
-        <!-- Kategorie -->
+        <!-- Sub Type (Hoofkategorie) -->
+        <div class="relative dropdown-parent" data-filter="subtype">
+          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
+            <span class="btn-label font-medium">Sub Type: Alles</span>
+            <svg style="width:14px;height:14px;" class="text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
+        </div>
+
+        <!-- Kategorie (Beskrywingsvlak) -->
         <div class="relative dropdown-parent" data-filter="category">
           <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
             <span class="btn-label font-medium">Kategorie: Alles</span>
@@ -174,15 +177,6 @@
           <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
         </div>
 
-        <!-- Sub Type -->
-        <div class="relative dropdown-parent" data-filter="subtype">
-          <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
-            <span class="btn-label font-medium">Sub Type: Alles</span>
-            <svg style="width:14px;height:14px;" class="text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-          </button>
-          <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
-        </div>
-
         <!-- Tax Year -->
         <div class="relative dropdown-parent" data-filter="taxYear">
           <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
@@ -205,25 +199,21 @@
       <!-- Bykomende Filter Beheer & Sorteer -->
       <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/80 text-xs sm:text-sm">
         <div class="flex flex-wrap items-center gap-3 sm:gap-4">
-          <!-- Herstel Filters Knoppie -->
           <button id="btn-reset-filters" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
             Herstel filters
           </button>
 
-          <!-- Wys Gemiddeld -->
           <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white select-none">
             <input type="checkbox" id="chk-show-average" checked class="w-4 h-4 rounded text-blue-600 bg-slate-800 border-slate-700 focus:ring-blue-500">
             <span>Wys Gemiddeld</span>
           </label>
 
-          <!-- Wys % -->
           <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white select-none">
             <input type="checkbox" id="chk-show-percentage" checked class="w-4 h-4 rounded text-blue-600 bg-slate-800 border-slate-700 focus:ring-blue-500">
             <span>Wys %</span>
           </label>
         </div>
 
-        <!-- Sorteer Kategorie Dropdown -->
         <div class="flex items-center gap-2">
           <label for="select-sort" class="text-slate-400 hidden sm:inline">Sorteer Kategorie:</label>
           <select id="select-sort" class="bg-slate-800 text-slate-200 border border-slate-700 rounded px-2.5 py-1 text-xs sm:text-sm focus:outline-none focus:border-blue-500">
@@ -236,14 +226,14 @@
       </div>
     </section>
 
-    <!-- Google Sheet Status / Waarskuwing Balkie -->
+    <!-- Google Sheet Status Balkie -->
     <div id="connection-status-banner" class="hidden bg-amber-950/40 border border-amber-800/70 rounded-xl p-3 sm:p-4 text-xs sm:text-sm text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
       <div class="flex items-start gap-2.5">
         <span class="text-lg">⚠️</span>
         <div>
-          <span class="font-bold text-amber-300" id="banner-status-title">Google Sheet nie publiek toeganklik nie</span>
+          <span class="font-bold text-amber-300" id="banner-status-title">Google Sheet kon nie lewendig laai nie</span>
           <p class="text-amber-300/80 text-xs mt-0.5" id="banner-status-desc">
-            Om jou transaksies lewendig te laai: Maak jou Google Sheet oop &gt; <strong>Share</strong> &gt; stel op <em>"Anyone with the link can view"</em>.
+            Maak jou Google Sheet oop &gt; <strong>Share</strong> &gt; stel op <em>"Anyone with the link can view"</em>.
           </p>
         </div>
       </div>
@@ -260,7 +250,6 @@
 
     <!-- Sleutel Syfers (KPI Kaarte) -->
     <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <!-- Totale inkomste -->
       <div class="bg-slate-900/80 rounded-xl p-4 sm:p-5 border border-slate-800 relative overflow-hidden shadow-lg">
         <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Totale inkomste</div>
         <div class="mt-2 flex items-baseline gap-2">
@@ -272,7 +261,6 @@
         </div>
       </div>
 
-      <!-- Totale uitgawes -->
       <div class="bg-slate-900/80 rounded-xl p-4 sm:p-5 border border-slate-800 relative overflow-hidden shadow-lg">
         <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Totale uitgawes</div>
         <div class="mt-2 flex items-baseline gap-2">
@@ -284,7 +272,6 @@
         </div>
       </div>
 
-      <!-- Netto saldo -->
       <div class="bg-slate-900/80 rounded-xl p-4 sm:p-5 border border-slate-800 relative overflow-hidden shadow-lg">
         <div class="text-xs uppercase tracking-wider font-semibold text-slate-400">Netto saldo</div>
         <div class="mt-2 flex items-baseline gap-2">
@@ -303,23 +290,22 @@
         <div>
           <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Inkomste & uitgawes per maand</h2>
           <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
-            Kliek op enige kategorie (bv. <strong>▸ Inkomste</strong> of <strong>▸ Uitgawes</strong>) om die onderliggende sub-tipes oop te vou.
+            Kliek op enige kategorie (bv. <strong>▸ Income</strong> of <strong>▸ Expense</strong>) om die onderliggende sub-tipes oop te vou.
           </p>
         </div>
 
-        <!-- Toegewyde Jaar Kieser vir Maandelikse Tabel -->
         <div class="flex items-center gap-2 self-start md:self-auto bg-slate-800/90 border border-slate-700 px-3 py-1.5 rounded-lg shadow-sm">
           <label for="monthly-year-select" class="text-xs font-semibold text-slate-300 whitespace-nowrap flex items-center gap-1">
             <svg style="width:14px;height:14px;" class="text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             <span>Kies Jaar vir Maande:</span>
           </label>
           <select id="monthly-year-select" class="bg-slate-900 text-blue-400 font-bold border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-blue-500">
+            <option value="2026" selected>2026</option>
             <option value="ALL">Alle Jare</option>
           </select>
         </div>
       </div>
 
-      <!-- Tabel Rol area -->
       <div class="overflow-x-auto w-full">
         <table id="monthly-matrix-table" class="w-full text-left border-collapse text-xs sm:text-sm">
           <thead>
@@ -341,11 +327,10 @@
       <div>
         <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Inkomste & uitgawes per jaar</h2>
         <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
-          Elke kolom is een gekose jaar. Gehoorsaam al die filters hierbo, behalwe die Jaar-filter.
+          Elke kolom is een gekose jaar.
         </p>
       </div>
 
-      <!-- Jaar Filter vir Jaarlikse Tabel -->
       <div class="flex items-center gap-2">
         <div class="relative dropdown-parent" data-filter="yearlyTableYears">
           <button id="yearly-filter-btn" class="badge-filter filter-trigger inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
@@ -356,7 +341,6 @@
         </div>
       </div>
 
-      <!-- Jaarlikse Matriks Tabel -->
       <div class="overflow-x-auto w-full border border-slate-800/80 rounded-lg">
         <table id="yearly-matrix-table" class="w-full text-left border-collapse text-xs sm:text-sm">
           <thead>
@@ -461,7 +445,7 @@
         <div>
           <label class="block font-medium text-slate-200 mb-1">Google Sheet ID</label>
           <input type="text" id="setting-sheet-id" value="1LBOKvSIfIu4pbEgbxT2sedjs_24oYR5b_FxOZAKHTuk" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
-          <p class="text-[11px] text-slate-400 mt-1">Maak seker die Google Sheet is gedeel met: <em>"Enigiemand met die skakel kan bekyk"</em> (Anyone with the link can view).</p>
+          <p class="text-[11px] text-slate-400 mt-1">Maak seker die Google Sheet is gedeel met: <em>"Enigiemand met die skakel kan bekyk"</em>.</p>
         </div>
 
         <div>
@@ -512,7 +496,7 @@
       subtype: [],
       taxYear: [],
       taxPeriod: [],
-      monthlyYear: 'ALL',
+      monthlyYear: '2026',
       yearlyYears: [],
       showAverage: true,
       showPercentage: true,
@@ -696,7 +680,19 @@
         return found ? found.idx : fallbackIdx;
       };
 
-      // Vind kolom-indekse volgens jou struktuur (Date, Description, Narrative, Amount, Balance, Year, Month, Tax Year, Tax Period, Kategorie, Category & Desc, Type, Sub Type, ACC NAME, Bank)
+      // Kolom kartering:
+      // A (0): Date
+      // D (3): Amount
+      // E (4): Balance
+      // F (5): Year
+      // G (6): Month
+      // H (7): Tax Year
+      // I (8): Tax Period
+      // J (9): Kategorie (bv. Kos - Kruideniersware, Salary MB) -> DIT IS DIE SUB-ITEM
+      // L (11): Type (Income / Expense)
+      // M (12): Sub Type (bv. Kos, Expense, Bank-Koste, Income) -> DIT IS DIE HOOF-KATEGORIE
+      // N (13): ACC NAME
+      // O (14): Bank
       const idxDate = findCol(c => c.label === 'date' || c.label.includes('dat'), 0);
       const idxAmount = findCol(c => c.label === 'amount' || c.label.includes('bedrag'), 3);
       const idxBalance = findCol(c => c.label === 'balance' || c.label.includes('saldo'), 4);
@@ -704,9 +700,9 @@
       const idxMonth = findCol(c => c.label === 'month' || c.label.includes('maand'), 6);
       const idxTaxYear = findCol(c => c.label.includes('tax year') || c.label.includes('belastingjaar'), 7);
       const idxTaxPeriod = findCol(c => c.label.includes('tax period'), 8);
-      const idxCategory = findCol(c => c.label === 'kategorie' || c.label === 'category', 9);
+      const idxSpecificCategory = findCol(c => c.label === 'kategorie' || c.label === 'category', 9);
       const idxType = findCol(c => c.label === 'type' || c.label.includes('tipe'), 11);
-      const idxSubtype = findCol(c => c.label === 'sub type' || c.label === 'subtype', 12);
+      const idxBroadGroup = findCol(c => c.label === 'sub type' || c.label === 'subtype', 12);
       const idxAccount = findCol(c => c.label.includes('acc name') || c.label.includes('rekening'), 13);
       const idxBank = findCol(c => c.label === 'bank', 14);
 
@@ -722,9 +718,9 @@
         const cellMonth = r.c[idxMonth];
         const cellTaxYear = r.c[idxTaxYear];
         const cellTaxPeriod = r.c[idxTaxPeriod];
-        const cellCat = r.c[idxCategory];
+        const cellSpecific = r.c[idxSpecificCategory];
         const cellType = r.c[idxType];
-        const cellSub = r.c[idxSubtype];
+        const cellBroad = r.c[idxBroadGroup];
         const cellAcc = r.c[idxAccount];
         const cellBank = r.c[idxBank];
 
@@ -732,15 +728,19 @@
 
         const rawYear = String(getVal(cellYear, '')).trim();
         const rawMonth = String(getVal(cellMonth, '')).trim();
-        const rawCat = String(getVal(cellCat, 'Onbekend')).trim() || 'Onbekend';
+        
+        // HOOFGROEP is Kolom M (Sub Type in Sheet)
+        // SUB-ITEM is Kolom J (Kategorie in Sheet)
+        const rawMainGroup = String(getVal(cellBroad, 'Algemeen')).trim() || 'Algemeen';
+        const rawSpecificItem = String(getVal(cellSpecific, 'Onbekend')).trim() || 'Onbekend';
+        
         const rawType = String(getVal(cellType, 'Expense')).trim() || 'Expense';
-        const rawSub = String(getVal(cellSub, 'Algemeen')).trim() || 'Algemeen';
         const rawAcc = String(getVal(cellAcc, 'Hoofrekening')).trim() || 'Hoofrekening';
         const rawBank = String(getVal(cellBank, 'Bank')).trim() || 'Bank';
         const rawTaxYear = String(getVal(cellTaxYear, '')).trim();
         const rawTaxPeriod = String(getVal(cellTaxPeriod, '')).trim();
 
-        // 1. Bedrag verwerking (hanteer negatiewe bedrae tussen hakies)
+        // Bedrag verwerking
         let numAmount = 0;
         if (cellAmt) {
           if (typeof cellAmt.v === 'number') {
@@ -752,7 +752,7 @@
           }
         }
 
-        // 2. Saldo verwerking
+        // Saldo verwerking
         let numBalance = 0;
         if (cellBal) {
           if (typeof cellBal.v === 'number') {
@@ -764,7 +764,7 @@
           }
         }
 
-        // 3. Datum en Maand verwerking
+        // Datum verwerking
         let yr = 0, mIdx = 0, day = 1;
         let dateIdentified = false;
 
@@ -772,7 +772,6 @@
           const vStr = String(cellDate.v !== undefined ? cellDate.v : '');
           const fStr = String(cellDate.f !== undefined ? cellDate.f : '');
 
-          // Google GViz Date(...) formaat
           const gvizMatch = vStr.match(/Date\((\d+),\s*(\d+),\s*(\d+)/i);
           if (gvizMatch) {
             yr = parseInt(gvizMatch[1]);
@@ -780,7 +779,6 @@
             day = parseInt(gvizMatch[3]);
             dateIdentified = true;
           } else {
-            // Teks datum bv. 01-Jan-22
             const txt = fStr || vStr;
             const textMatch = txt.match(/^(\d{1,2})[-/ ]([A-Za-z]{3})[-/ ](\d{2,4})$/);
             if (textMatch) {
@@ -801,7 +799,6 @@
           }
         }
 
-        // Rugsteun vanaf Year en Month kolomme as datum-sel nie ontleed kon word nie
         if (!dateIdentified) {
           if (rawYear) {
             const yMatch = rawYear.match(/\d{4}/);
@@ -830,8 +827,10 @@
           month: monthLabel,
           monthIndex: mIdx + 1,
           section: isIncome ? 'Inkomste' : 'Uitgawes',
-          category: rawCat,
-          subtype: rawSub,
+          mainGroup: rawMainGroup,       // Sub Type uit sheet (bv. Income, Expense, Kos)
+          specificItem: rawSpecificItem, // Kategorie uit sheet (bv. Salary MB, Kos - Kruideniers)
+          category: rawSpecificItem,     // vir dropdown filter
+          subtype: rawMainGroup,         // vir dropdown filter
           amount: numAmount,
           account: rawAcc,
           bank: rawBank,
@@ -846,13 +845,13 @@
     }
 
     const filterDefinitions = [
+      { key: 'subtype', label: 'Sub Type', prop: 'subtype' },
       { key: 'category', label: 'Kategorie', prop: 'category' },
       { key: 'year', label: 'Jaar', prop: 'year' },
       { key: 'month', label: 'Maand', prop: 'month' },
       { key: 'account', label: 'Rekening', prop: 'account' },
       { key: 'bank', label: 'Bank', prop: 'bank' },
       { key: 'type', label: 'Type', prop: 'type' },
-      { key: 'subtype', label: 'Sub Type', prop: 'subtype' },
       { key: 'taxYear', label: 'Tax Year', prop: 'taxYear' },
       { key: 'taxPeriod', label: 'Tax Period', prop: 'taxPeriod' }
     ];
@@ -1028,8 +1027,8 @@
       document.getElementById('kpi-net-bar').style.width = `${Math.min(100, Math.round((Math.max(0, netBalance) / maxVal) * 100))}%`;
     }
 
-    function toggleCategoryExpand(catName) {
-      const decoded = decodeURIComponent(catName);
+    function toggleCategoryExpand(mainGroup) {
+      const decoded = decodeURIComponent(mainGroup);
       if (expandedCategories.has(decoded)) {
         expandedCategories.delete(decoded);
       } else {
@@ -1038,8 +1037,8 @@
       renderMatrixTable();
     }
 
-    function toggleYearlyCategoryExpand(catName) {
-      const decoded = decodeURIComponent(catName);
+    function toggleYearlyCategoryExpand(mainGroup) {
+      const decoded = decodeURIComponent(mainGroup);
       if (expandedYearlyCategories.has(decoded)) {
         expandedYearlyCategories.delete(decoded);
       } else {
@@ -1086,7 +1085,7 @@
         sortedMonths = sortedMonths.filter(m => filterState.month.includes(m));
       }
 
-      let headHTML = `<th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[210px] border-r border-slate-700">Kategorie (Kliek vir Sub-tipes)</th>`;
+      let headHTML = `<th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[210px] border-r border-slate-700">Kategorie</th>`;
       sortedMonths.forEach(m => {
         headHTML += `<th class="py-3 px-3 text-right whitespace-nowrap">${m}</th>`;
       });
@@ -1114,23 +1113,27 @@
         const isInc = t.section === 'Inkomste';
         const targetMap = isInc ? incomeMap : expenseMap;
         const totalTarget = isInc ? monthlyTotalIncome : monthlyTotalExpense;
-        const sub = t.subtype || 'Algemeen';
+        
+        // HOOFGROEP (Sub Type uit Google Sheet)
+        const mainCat = t.mainGroup || 'Algemeen';
+        // SUB-ITEM (Kategorie uit Google Sheet)
+        const subItem = t.specificItem || 'Diverse';
 
-        if (!targetMap[t.category]) {
-          targetMap[t.category] = { total: 0, byMonth: {}, subtypes: {} };
-          sortedMonths.forEach(m => targetMap[t.category].byMonth[m] = 0);
+        if (!targetMap[mainCat]) {
+          targetMap[mainCat] = { total: 0, byMonth: {}, subItems: {} };
+          sortedMonths.forEach(m => targetMap[mainCat].byMonth[m] = 0);
         }
 
-        if (!targetMap[t.category].subtypes[sub]) {
-          targetMap[t.category].subtypes[sub] = { total: 0, byMonth: {} };
-          sortedMonths.forEach(m => targetMap[t.category].subtypes[sub].byMonth[m] = 0);
+        if (!targetMap[mainCat].subItems[subItem]) {
+          targetMap[mainCat].subItems[subItem] = { total: 0, byMonth: {} };
+          sortedMonths.forEach(m => targetMap[mainCat].subItems[subItem].byMonth[m] = 0);
         }
 
         if (sortedMonths.includes(t.month)) {
-          targetMap[t.category].byMonth[t.month] += t.amount;
-          targetMap[t.category].total += t.amount;
-          targetMap[t.category].subtypes[sub].byMonth[t.month] += t.amount;
-          targetMap[t.category].subtypes[sub].total += t.amount;
+          targetMap[mainCat].byMonth[t.month] += t.amount;
+          targetMap[mainCat].total += t.amount;
+          targetMap[mainCat].subItems[subItem].byMonth[t.month] += t.amount;
+          targetMap[mainCat].subItems[subItem].total += t.amount;
           totalTarget[t.month] += t.amount;
         }
       });
@@ -1168,14 +1171,12 @@
         const avg = data.total / monthCount;
         const pct = grandTotalIncome > 0 ? ((data.total / grandTotalIncome) * 100).toFixed(1) + '%' : '0.0%';
         const isExpanded = expandedCategories.has(catName);
-        const subCount = Object.keys(data.subtypes).length;
 
         bodyHTML += `
           <tr class="hover:bg-slate-800/50 cursor-pointer select-none transition border-b border-slate-800/40" onclick="toggleCategoryExpand('${encodeURIComponent(catName)}')">
             <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
               <span class="text-blue-400 text-xs font-bold inline-block w-4">${isExpanded ? '▼' : '▸'}</span>
               <span class="font-semibold text-white">${catName}</span>
-              ${subCount > 0 ? `<span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded border border-slate-700">${subCount}</span>` : ''}
             </td>
             ${sortedMonths.map(m => {
               const val = data.byMonth[m] || 0;
@@ -1188,7 +1189,7 @@
         `;
 
         if (isExpanded) {
-          const sortedSubs = Object.entries(data.subtypes).sort((a, b) => b[1].total - a[1].total);
+          const sortedSubs = Object.entries(data.subItems).sort((a, b) => b[1].total - a[1].total);
           sortedSubs.forEach(([subName, sData]) => {
             const sAvg = sData.total / monthCount;
             const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
@@ -1237,14 +1238,12 @@
         const avg = data.total / monthCount;
         const pct = grandTotalExpense > 0 ? ((data.total / grandTotalExpense) * 100).toFixed(1) + '%' : '0.0%';
         const isExpanded = expandedCategories.has(catName);
-        const subCount = Object.keys(data.subtypes).length;
 
         bodyHTML += `
           <tr class="hover:bg-slate-800/50 cursor-pointer select-none transition border-b border-slate-800/40" onclick="toggleCategoryExpand('${encodeURIComponent(catName)}')">
             <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
               <span class="text-rose-400 text-xs font-bold inline-block w-4">${isExpanded ? '▼' : '▸'}</span>
               <span class="font-semibold text-white">${catName}</span>
-              ${subCount > 0 ? `<span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded border border-slate-700">${subCount}</span>` : ''}
             </td>
             ${sortedMonths.map(m => {
               const val = data.byMonth[m] || 0;
@@ -1257,7 +1256,7 @@
         `;
 
         if (isExpanded) {
-          const sortedSubs = Object.entries(data.subtypes).sort((a, b) => b[1].total - a[1].total);
+          const sortedSubs = Object.entries(data.subItems).sort((a, b) => b[1].total - a[1].total);
           sortedSubs.forEach(([subName, sData]) => {
             const sAvg = sData.total / monthCount;
             const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
@@ -1335,7 +1334,7 @@
         return activeYears.includes(item.year);
       });
 
-      let headHTML = `<th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[210px] border-r border-slate-700">Kategorie (Kliek vir Sub-tipes)</th>`;
+      let headHTML = `<th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[210px] border-r border-slate-700">Kategorie</th>`;
       activeYears.forEach(y => {
         headHTML += `<th class="py-3 px-3 text-right whitespace-nowrap">${y}</th>`;
       });
@@ -1358,23 +1357,24 @@
         const isInc = t.section === 'Inkomste';
         const targetMap = isInc ? incomeMap : expenseMap;
         const totalTarget = isInc ? yearlyTotalIncome : yearlyTotalExpense;
-        const sub = t.subtype || 'Algemeen';
+        const mainCat = t.mainGroup || 'Algemeen';
+        const subItem = t.specificItem || 'Diverse';
 
-        if (!targetMap[t.category]) {
-          targetMap[t.category] = { total: 0, byYear: {}, subtypes: {} };
-          activeYears.forEach(y => targetMap[t.category].byYear[y] = 0);
+        if (!targetMap[mainCat]) {
+          targetMap[mainCat] = { total: 0, byYear: {}, subItems: {} };
+          activeYears.forEach(y => targetMap[mainCat].byYear[y] = 0);
         }
 
-        if (!targetMap[t.category].subtypes[sub]) {
-          targetMap[t.category].subtypes[sub] = { total: 0, byYear: {} };
-          activeYears.forEach(y => targetMap[t.category].subtypes[sub].byYear[y] = 0);
+        if (!targetMap[mainCat].subItems[subItem]) {
+          targetMap[mainCat].subItems[subItem] = { total: 0, byYear: {} };
+          activeYears.forEach(y => targetMap[mainCat].subItems[subItem].byYear[y] = 0);
         }
 
         if (activeYears.includes(t.year)) {
-          targetMap[t.category].byYear[t.year] += t.amount;
-          targetMap[t.category].total += t.amount;
-          targetMap[t.category].subtypes[sub].byYear[t.year] += t.amount;
-          targetMap[t.category].subtypes[sub].total += t.amount;
+          targetMap[mainCat].byYear[t.year] += t.amount;
+          targetMap[mainCat].total += t.amount;
+          targetMap[mainCat].subItems[subItem].byYear[t.year] += t.amount;
+          targetMap[mainCat].subItems[subItem].total += t.amount;
           totalTarget[t.year] += t.amount;
         }
       });
@@ -1402,14 +1402,12 @@
         const avg = data.total / yearCount;
         const pct = grandTotalIncome > 0 ? ((data.total / grandTotalIncome) * 100).toFixed(1) + '%' : '0.0%';
         const isExpanded = expandedYearlyCategories.has(catName);
-        const subCount = Object.keys(data.subtypes).length;
 
         bodyHTML += `
           <tr class="hover:bg-slate-800/50 cursor-pointer select-none transition border-b border-slate-800/40" onclick="toggleYearlyCategoryExpand('${encodeURIComponent(catName)}')">
             <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
               <span class="text-blue-400 text-xs font-bold inline-block w-4">${isExpanded ? '▼' : '▸'}</span>
               <span class="font-semibold text-white">${catName}</span>
-              ${subCount > 0 ? `<span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded border border-slate-700">${subCount}</span>` : ''}
             </td>
             ${activeYears.map(y => {
               const val = data.byYear[y] || 0;
@@ -1422,7 +1420,7 @@
         `;
 
         if (isExpanded) {
-          const sortedSubs = Object.entries(data.subtypes).sort((a, b) => b[1].total - a[1].total);
+          const sortedSubs = Object.entries(data.subItems).sort((a, b) => b[1].total - a[1].total);
           sortedSubs.forEach(([subName, sData]) => {
             const sAvg = sData.total / yearCount;
             const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
@@ -1471,14 +1469,12 @@
         const avg = data.total / yearCount;
         const pct = grandTotalExpense > 0 ? ((data.total / grandTotalExpense) * 100).toFixed(1) + '%' : '0.0%';
         const isExpanded = expandedYearlyCategories.has(catName);
-        const subCount = Object.keys(data.subtypes).length;
 
         bodyHTML += `
           <tr class="hover:bg-slate-800/50 cursor-pointer select-none transition border-b border-slate-800/40" onclick="toggleYearlyCategoryExpand('${encodeURIComponent(catName)}')">
             <td class="py-2.5 px-4 sticky left-0 bg-[#0d1320] font-medium text-slate-200 border-r border-slate-800 flex items-center gap-2">
               <span class="text-rose-400 text-xs font-bold inline-block w-4">${isExpanded ? '▼' : '▸'}</span>
               <span class="font-semibold text-white">${catName}</span>
-              ${subCount > 0 ? `<span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded border border-slate-700">${subCount}</span>` : ''}
             </td>
             ${activeYears.map(y => {
               const val = data.byYear[y] || 0;
@@ -1491,7 +1487,7 @@
         `;
 
         if (isExpanded) {
-          const sortedSubs = Object.entries(data.subtypes).sort((a, b) => b[1].total - a[1].total);
+          const sortedSubs = Object.entries(data.subItems).sort((a, b) => b[1].total - a[1].total);
           sortedSubs.forEach(([subName, sData]) => {
             const sAvg = sData.total / yearCount;
             const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
@@ -1769,11 +1765,10 @@
     }
 
     function setupEventListeners() {
-      // Herstel Filters Knoppie
       document.getElementById('btn-reset-filters').onclick = () => {
         filterDefinitions.forEach(d => filterState[d.key] = []);
         filterState.yearlyYears = [];
-        filterState.monthlyYear = 'ALL';
+        filterState.monthlyYear = '2026';
         expandedCategories.clear();
         expandedYearlyCategories.clear();
         window.history.replaceState(null, '', window.location.pathname);
@@ -1781,7 +1776,6 @@
         showToast('Alle filters is herstel.');
       };
 
-      // Toegewyde Jaar Kieser vir Maandelikse Tabel
       const monthlyYearSelect = document.getElementById('monthly-year-select');
       if (monthlyYearSelect) {
         monthlyYearSelect.onchange = (e) => {
@@ -1791,7 +1785,6 @@
         };
       }
 
-      // Checkboxes
       document.getElementById('chk-show-average').onchange = (e) => {
         filterState.showAverage = e.target.checked;
         saveStateToUrl();
@@ -1810,7 +1803,6 @@
         renderMatrixTable();
       };
 
-      // Grafiek Rekening & Maande
       document.getElementById('balance-bar-account-select').onchange = (e) => {
         filterState.balanceAccount = e.target.value;
         document.getElementById('balance-line-account-select').value = e.target.value;
@@ -1839,7 +1831,6 @@
         renderAccountBalanceCharts();
       };
 
-      // Knoppies
       document.getElementById('btn-refresh-data').onclick = () => {
         fetchGoogleSheetData();
       };
@@ -1849,7 +1840,6 @@
         showToast(document.documentElement.classList.contains('dark') ? 'Donker modus geaktiveer' : 'Lig modus geaktiveer');
       };
 
-      // Instellings
       const modal = document.getElementById('settings-modal');
       document.getElementById('btn-open-settings').onclick = () => {
         document.getElementById('setting-sheet-id').value = APP_CONFIG.sheetId;
@@ -1868,7 +1858,6 @@
         fetchGoogleSheetData();
       };
 
-      // CSV Oplaai
       const handleCsvUpload = (file) => {
         if (!file) return;
         const reader = new FileReader();
@@ -1900,11 +1889,11 @@
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"\vert{}"$/g, '').trim());
         const dStr = cols[headers.findIndex(h => h.includes('dat')) !== -1 ? headers.findIndex(h => h.includes('dat')) : 0] || '2026-01-01';
-        const cat = cols[headers.findIndex(h => h === 'kategorie' || h === 'category') !== -1 ? headers.findIndex(h => h === 'kategorie' || h === 'category') : 9] || 'Ander';
+        const specificItem = cols[headers.findIndex(h => h === 'kategorie' || h === 'category') !== -1 ? headers.findIndex(h => h === 'kategorie' || h === 'category') : 9] || 'Onbekend';
         const amtRaw = cols[headers.findIndex(h => h.includes('bed') || h.includes('amou')) !== -1 ? headers.findIndex(h => h.includes('bed') || h.includes('amou')) : 3] || '0';
         const acc = cols[headers.findIndex(h => h.includes('acc name') || h.includes('rek')) !== -1 ? headers.findIndex(h => h.includes('acc name') || h.includes('rek')) : 13] || 'Hoofrekening';
         const type = cols[headers.findIndex(h => h === 'type' || h.includes('tip')) !== -1 ? headers.findIndex(h => h === 'type' || h.includes('tip')) : 11] || 'Expense';
-        const sub = cols[headers.findIndex(h => h === 'sub type' || h === 'subtype') !== -1 ? headers.findIndex(h => h === 'sub type' || h === 'subtype') : 12] || 'Algemeen';
+        const mainGroup = cols[headers.findIndex(h => h === 'sub type' || h === 'subtype') !== -1 ? headers.findIndex(h => h === 'sub type' || h === 'subtype') : 12] || 'Algemeen';
         const bank = cols[headers.findIndex(h => h === 'bank') !== -1 ? headers.findIndex(h => h === 'bank') : 14] || 'Bank';
         const balRaw = cols[headers.findIndex(h => h.includes('bal') || h.includes('sal')) !== -1 ? headers.findIndex(h => h.includes('bal') || h.includes('sal')) : 4] || '0';
 
@@ -1918,15 +1907,19 @@
         let yr = isNaN(d.getTime()) ? 2026 : d.getFullYear();
         let mIdx = isNaN(d.getTime()) ? 0 : d.getMonth();
 
+        const isIncome = type.toLowerCase().includes('income') || type.toLowerCase().includes('inkomste');
+
         items.push({
           id: i,
           date: dStr,
           year: String(yr),
           month: `${MONTH_NAMES_AF[mIdx]} '${String(yr).slice(-2)}`,
           monthIndex: mIdx + 1,
-          section: type.toLowerCase().includes('income') || type.toLowerCase().includes('inkomste') ? 'Inkomste' : 'Uitgawes',
-          category: cat,
-          subtype: sub,
+          section: isIncome ? 'Inkomste' : 'Uitgawes',
+          mainGroup: mainGroup,
+          specificItem: specificItem,
+          category: specificItem,
+          subtype: mainGroup,
           amount: amt,
           account: acc,
           bank: bank,
