@@ -114,7 +114,7 @@
     <!-- Filter Paneel -->
     <section class="bg-slate-900/60 p-3 sm:p-4 rounded-xl border border-slate-800 space-y-3">
       <div class="flex flex-wrap items-center gap-2" id="filter-buttons-container">
-        <!-- Sub Type (Hoofkategorie) -->
+        <!-- Sub Type -->
         <div class="relative dropdown-parent" data-filter="subtype">
           <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
             <span class="btn-label font-medium">Sub Type: Alles</span>
@@ -123,7 +123,7 @@
           <div class="dropdown-panel hidden absolute z-50 left-0 mt-1 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-2.5 space-y-2"></div>
         </div>
 
-        <!-- Kategorie (Beskrywingsvlak) -->
+        <!-- Kategorie -->
         <div class="relative dropdown-parent" data-filter="category">
           <button class="badge-filter filter-trigger inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-800/90 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm border border-slate-700">
             <span class="btn-label font-medium">Kategorie: Alles</span>
@@ -501,7 +501,7 @@
       showAverage: true,
       showPercentage: true,
       sort: 'total_desc',
-      balanceMonths: '12',
+      balanceMonths: '24',
       balanceAccount: 'ALL'
     };
 
@@ -680,19 +680,6 @@
         return found ? found.idx : fallbackIdx;
       };
 
-      // Kolom kartering:
-      // A (0): Date
-      // D (3): Amount
-      // E (4): Balance
-      // F (5): Year
-      // G (6): Month
-      // H (7): Tax Year
-      // I (8): Tax Period
-      // J (9): Kategorie (bv. Kos - Kruideniersware, Salary MB) -> DIT IS DIE SUB-ITEM
-      // L (11): Type (Income / Expense)
-      // M (12): Sub Type (bv. Kos, Expense, Bank-Koste, Income) -> DIT IS DIE HOOF-KATEGORIE
-      // N (13): ACC NAME
-      // O (14): Bank
       const idxDate = findCol(c => c.label === 'date' || c.label.includes('dat'), 0);
       const idxAmount = findCol(c => c.label === 'amount' || c.label.includes('bedrag'), 3);
       const idxBalance = findCol(c => c.label === 'balance' || c.label.includes('saldo'), 4);
@@ -753,14 +740,19 @@
         }
 
         // Saldo verwerking
-        let numBalance = 0;
-        if (cellBal) {
+        let numBalance = null;
+        if (cellBal && cellBal.v !== undefined && cellBal.v !== null && cellBal.v !== '') {
           if (typeof cellBal.v === 'number') {
             numBalance = cellBal.v;
           } else {
-            const strBal = String(cellBal.f || cellBal.v || '0').replace(/[R\s]/g, '').replace(/,/g, '');
+            const strBal = String(cellBal.f || cellBal.v || '').replace(/[R\s]/g, '').replace(/,/g, '');
             const paren = strBal.match(/\(([\d.]+)\)/);
-            numBalance = paren ? -parseFloat(paren[1]) : (parseFloat(strBal) || 0);
+            if (paren) {
+              numBalance = -parseFloat(paren[1]);
+            } else {
+              const parsed = parseFloat(strBal);
+              if (!isNaN(parsed)) numBalance = parsed;
+            }
           }
         }
 
@@ -987,7 +979,7 @@
     }
 
     function formatCurrency(num) {
-      if (num === 0 || isNaN(num)) return 'R 0';
+      if (num === 0 || isNaN(num) || num === null) return 'R 0';
       const formatted = Math.round(num).toLocaleString('af-ZA').replace(/,/g, ' ');
       return `R ${formatted}`;
     }
@@ -1114,9 +1106,7 @@
         const targetMap = isInc ? incomeMap : expenseMap;
         const totalTarget = isInc ? monthlyTotalIncome : monthlyTotalExpense;
         
-        // HOOFGROEP (Sub Type uit Google Sheet)
         const mainCat = t.mainGroup || 'Algemeen';
-        // SUB-ITEM (Kategorie uit Google Sheet)
         const subItem = t.specificItem || 'Diverse';
 
         if (!targetMap[mainCat]) {
@@ -1339,8 +1329,14 @@
         headHTML += `<th class="py-3 px-3 text-right whitespace-nowrap">${y}</th>`;
       });
       headHTML += `<th class="py-3 px-3 text-right font-bold bg-slate-800/60">Totaal</th>`;
-      headHTML += `<th class="py-3 px-3 text-right font-bold bg-slate-800/60">Gemiddeld</th>`;
-      headHTML += `<th class="py-3 px-3 text-right font-bold bg-slate-800/60">%</th>`;
+      
+      // Respekteer nou Wys Gemiddeld & Wys % bo-aan
+      if (filterState.showAverage) {
+        headHTML += `<th class="py-3 px-3 text-right font-bold col-average bg-slate-800/60">Gemiddeld</th>`;
+      }
+      if (filterState.showPercentage) {
+        headHTML += `<th class="py-3 px-3 text-right font-bold col-percentage bg-slate-800/60">%</th>`;
+      }
       headRow.innerHTML = headHTML;
 
       const incomeMap = {};
@@ -1386,12 +1382,14 @@
       const sortedIncomeCats = Object.entries(incomeMap).sort((a, b) => b[1].total - a[1].total);
       const sortedExpenseCats = Object.entries(expenseMap).sort((a, b) => b[1].total - a[1].total);
 
+      const colSpanCount = activeYears.length + 2 + (filterState.showAverage ? 1 : 0) + (filterState.showPercentage ? 1 : 0);
+
       let bodyHTML = '';
 
       // INKOMSTE BANNER
       bodyHTML += `
         <tr class="bg-blue-950/40 text-blue-300 font-semibold border-t border-b border-blue-900/60">
-          <td colspan="${activeYears.length + 4}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
+          <td colspan="${colSpanCount}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
             <span class="w-1.5 h-4 bg-blue-500 rounded-full inline-block"></span>
             <span>Inkomste</span>
           </td>
@@ -1414,8 +1412,8 @@
               return `<td class="py-2.5 px-3 text-right ${val > 0 ? 'text-emerald-400 font-medium' : 'text-slate-600'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
             }).join('')}
             <td class="py-2.5 px-3 text-right font-semibold text-emerald-400 bg-slate-800/30">${formatCurrency(data.total)}</td>
-            <td class="py-2.5 px-3 text-right text-slate-300 bg-slate-800/30">${formatCurrency(avg)}</td>
-            <td class="py-2.5 px-3 text-right text-slate-300 bg-slate-800/30">${pct}</td>
+            ${filterState.showAverage ? `<td class="py-2.5 px-3 text-right text-slate-300 col-average bg-slate-800/30">${formatCurrency(avg)}</td>` : ''}
+            ${filterState.showPercentage ? `<td class="py-2.5 px-3 text-right text-slate-300 col-percentage bg-slate-800/30">${pct}</td>` : ''}
           </tr>
         `;
 
@@ -1435,8 +1433,8 @@
                   return `<td class="py-2 px-3 text-right ${val > 0 ? 'text-emerald-300/90' : 'text-slate-700'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
                 }).join('')}
                 <td class="py-2 px-3 text-right font-medium text-emerald-400/90 bg-slate-800/20">${formatCurrency(sData.total)}</td>
-                <td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${formatCurrency(sAvg)}</td>
-                <td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${sPct}</td>
+                ${filterState.showAverage ? `<td class="py-2 px-3 text-right text-slate-400 col-average bg-slate-800/20">${formatCurrency(sAvg)}</td>` : ''}
+                ${filterState.showPercentage ? `<td class="py-2 px-3 text-right text-slate-400 col-percentage bg-slate-800/20">${sPct}</td>` : ''}
               </tr>
             `;
           });
@@ -1450,15 +1448,15 @@
           <td class="py-3 px-4 sticky left-0 bg-[#0d1a24] text-white border-r border-emerald-900/40">Totaal Inkomste</td>
           ${activeYears.map(y => `<td class="py-3 px-3 text-right">${formatCurrency(yearlyTotalIncome[y])}</td>`).join('')}
           <td class="py-3 px-3 text-right font-extrabold">${formatCurrency(grandTotalIncome)}</td>
-          <td class="py-3 px-3 text-right">${formatCurrency(avgTotalIncome)}</td>
-          <td class="py-3 px-3 text-right">100.0%</td>
+          ${filterState.showAverage ? `<td class="py-3 px-3 text-right col-average">${formatCurrency(avgTotalIncome)}</td>` : ''}
+          ${filterState.showPercentage ? `<td class="py-3 px-3 text-right col-percentage">100.0%</td>` : ''}
         </tr>
       `;
 
       // UITGAWES BANNER
       bodyHTML += `
         <tr class="bg-rose-950/40 text-rose-300 font-semibold border-t border-b border-rose-900/60">
-          <td colspan="${activeYears.length + 4}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
+          <td colspan="${colSpanCount}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
             <span class="w-1.5 h-4 bg-rose-500 rounded-full inline-block"></span>
             <span>Uitgawes</span>
           </td>
@@ -1481,8 +1479,8 @@
               return `<td class="py-2.5 px-3 text-right text-slate-200">${val > 0 ? formatCurrency(val) : '—'}</td>`;
             }).join('')}
             <td class="py-2.5 px-3 text-right font-semibold text-rose-400 bg-slate-800/30">${formatCurrency(data.total)}</td>
-            <td class="py-2.5 px-3 text-right text-slate-300 bg-slate-800/30">${formatCurrency(avg)}</td>
-            <td class="py-2.5 px-3 text-right text-slate-300 bg-slate-800/30">${pct}</td>
+            ${filterState.showAverage ? `<td class="py-2.5 px-3 text-right text-slate-300 col-average bg-slate-800/30">${formatCurrency(avg)}</td>` : ''}
+            ${filterState.showPercentage ? `<td class="py-2.5 px-3 text-right text-slate-300 col-percentage bg-slate-800/30">${pct}</td>` : ''}
           </tr>
         `;
 
@@ -1502,8 +1500,8 @@
                   return `<td class="py-2 px-3 text-right ${val > 0 ? 'text-slate-300' : 'text-slate-700'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
                 }).join('')}
                 <td class="py-2 px-3 text-right font-medium text-rose-300/90 bg-slate-800/20">${formatCurrency(sData.total)}</td>
-                <td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${formatCurrency(sAvg)}</td>
-                <td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${sPct}</td>
+                ${filterState.showAverage ? `<td class="py-2 px-3 text-right text-slate-400 col-average bg-slate-800/20">${formatCurrency(sAvg)}</td>` : ''}
+                ${filterState.showPercentage ? `<td class="py-2 px-3 text-right text-slate-400 col-percentage bg-slate-800/20">${sPct}</td>` : ''}
               </tr>
             `;
           });
@@ -1517,8 +1515,8 @@
           <td class="py-3 px-4 sticky left-0 bg-[#1c1410] text-amber-200 border-r border-amber-900/40">Totaal Uitgawes</td>
           ${activeYears.map(y => `<td class="py-3 px-3 text-right">${formatCurrency(yearlyTotalExpense[y])}</td>`).join('')}
           <td class="py-3 px-3 text-right font-extrabold">${formatCurrency(grandTotalExpense)}</td>
-          <td class="py-3 px-3 text-right">${formatCurrency(avgTotalExpense)}</td>
-          <td class="py-3 px-3 text-right">100.0%</td>
+          ${filterState.showAverage ? `<td class="py-3 px-3 text-right col-average">${formatCurrency(avgTotalExpense)}</td>` : ''}
+          ${filterState.showPercentage ? `<td class="py-3 px-3 text-right col-percentage">100.0%</td>` : ''}
         </tr>
       `;
 
@@ -1533,8 +1531,8 @@
             return `<td class="py-3.5 px-3 text-right ${net >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(net)}</td>`;
           }).join('')}
           <td class="py-3.5 px-3 text-right font-black ${grandNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(grandNet)}</td>
-          <td class="py-3.5 px-3 text-right font-black ${avgNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(avgNet)}</td>
-          <td class="py-3.5 px-3 text-right text-slate-500">—</td>
+          ${filterState.showAverage ? `<td class="py-3.5 px-3 text-right col-average font-black ${avgNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatCurrency(avgNet)}</td>` : ''}
+          ${filterState.showPercentage ? `<td class="py-3.5 px-3 text-right text-slate-500 col-percentage">—</td>` : ''}
         </tr>
       `;
 
@@ -1645,18 +1643,32 @@
       });
 
       if (filterState.balanceMonths !== 'ALL') {
-        const count = parseInt(filterState.balanceMonths) || 12;
+        const count = parseInt(filterState.balanceMonths) || 24;
         allMonths = allMonths.slice(-count);
       }
 
       const labels = allMonths.map(m => m.label);
+
+      // Bereken maandelikse sluitingsaldo akkuraat:
+      // Ons hou 'n laaste bekende saldo per rekening by sodat 'n leë maand nie na R 0 val nie.
+      const chosenAccounts = filterState.balanceAccount === 'ALL' ? accounts : [filterState.balanceAccount];
+      const accountRunningBalances = {};
+      chosenAccounts.forEach(acc => accountRunningBalances[acc] = 0);
+
       const balances = labels.map(mLabel => {
-        let matching = rawTransactions.filter(t => t.month === mLabel);
-        if (filterState.balanceAccount !== 'ALL') {
-          matching = matching.filter(t => t.account === filterState.balanceAccount);
-        }
-        if (matching.length === 0) return 0;
-        return matching[matching.length - 1].balance || 0;
+        chosenAccounts.forEach(acc => {
+          const matchingAccTxs = rawTransactions.filter(t => t.month === mLabel && t.account === acc);
+          for (let i = matchingAccTxs.length - 1; i >= 0; i--) {
+            if (matchingAccTxs[i].balance !== null && matchingAccTxs[i].balance !== 0) {
+              accountRunningBalances[acc] = matchingAccTxs[i].balance;
+              break;
+            }
+          }
+        });
+
+        // Sommeer alle gekose rekeninge se saldo vir hierdie maand
+        const totalForMonth = chosenAccounts.reduce((sum, acc) => sum + (accountRunningBalances[acc] || 0), 0);
+        return totalForMonth;
       });
 
       // 1. Staafgrafiek
@@ -1691,8 +1703,12 @@
               ticks: { color: '#94a3b8', font: { size: 11 } }
             },
             y: {
-              display: false,
-              grid: { display: false }
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: {
+                color: '#94a3b8',
+                font: { size: 10 },
+                callback: (val) => formatCurrency(val)
+              }
             }
           }
         }
@@ -1718,7 +1734,7 @@
             tension: 0.35,
             pointBackgroundColor: '#60a5fa',
             pointBorderColor: '#1e3a8a',
-            pointRadius: 4,
+            pointRadius: 3,
             pointHoverRadius: 6
           }]
         },
@@ -1789,18 +1805,21 @@
         filterState.showAverage = e.target.checked;
         saveStateToUrl();
         renderMatrixTable();
+        renderYearlyMatrixTable();
       };
 
       document.getElementById('chk-show-percentage').onchange = (e) => {
         filterState.showPercentage = e.target.checked;
         saveStateToUrl();
         renderMatrixTable();
+        renderYearlyMatrixTable();
       };
 
       document.getElementById('select-sort').onchange = (e) => {
         filterState.sort = e.target.value;
         saveStateToUrl();
         renderMatrixTable();
+        renderYearlyMatrixTable();
       };
 
       document.getElementById('balance-bar-account-select').onchange = (e) => {
@@ -1900,8 +1919,11 @@
         const parenAmt = amtRaw.match(/\(([\d.]+)\)/);
         const amt = parenAmt ? parseFloat(parenAmt[1]) : Math.abs(parseFloat(amtRaw.replace(/[R\s,]/g, '')) || 0);
 
-        const parenBal = balRaw.match(/\(([\d.]+)\)/);
-        const bal = parenBal ? -parseFloat(parenBal[1]) : (parseFloat(balRaw.replace(/[R\s,]/g, '')) || 0);
+        let bal = null;
+        if (balRaw !== '') {
+          const parenBal = balRaw.match(/\(([\d.]+)\)/);
+          bal = parenBal ? -parseFloat(parenBal[1]) : (parseFloat(balRaw.replace(/[R\s,]/g, '')) || 0);
+        }
 
         let d = new Date(dStr);
         let yr = isNaN(d.getTime()) ? 2026 : d.getFullYear();
