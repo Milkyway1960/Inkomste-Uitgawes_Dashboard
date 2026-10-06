@@ -315,7 +315,6 @@
             <!-- Dinamies gegenereerde maande kolomme -->
             <tr id="matrix-head-row" class="bg-slate-800/90 text-slate-300 font-semibold border-b border-slate-700">
               <th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[180px]">Kategorie</th>
-              <!-- Maande sal hier ingevoeg word -->
               <th class="py-3 px-3 text-right">Totaal</th>
               <th class="py-3 px-3 text-right col-average">Gemiddeld</th>
               <th class="py-3 px-3 text-right col-percentage">%</th>
@@ -364,7 +363,6 @@
           <thead>
             <tr id="yearly-head-row" class="bg-slate-800/90 text-slate-300 font-semibold border-b border-slate-700">
               <th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[180px]">Kategorie</th>
-              <!-- Dinamiese jare word hier ingevoeg -->
               <th class="py-3 px-3 text-right">Totaal</th>
               <th class="py-3 px-3 text-right">Gemiddeld</th>
               <th class="py-3 px-3 text-right">%</th>
@@ -504,7 +502,7 @@
   </div>
 
   <script>
-    // State bestuur - URL hash behoud vir herlaai en boekmerk sonder verbode bergingsmetodes
+    // State bestuur - URL hash behoud vir herlaai en boekmerk
     const APP_CONFIG = {
       defaultSheetId: '1LBOKvSIfIu4pbEgbxT2sedjs_24oYR5b_FxOZAKHTuk',
       sheetId: '1LBOKvSIfIu4pbEgbxT2sedjs_24oYR5b_FxOZAKHTuk',
@@ -519,7 +517,7 @@
     let expandedCategories = new Set();
     let expandedYearlyCategories = new Set();
 
-    // Filter toestand wat behou word
+    // Filter toestand
     let filterState = {
       category: [],
       year: [],
@@ -530,8 +528,8 @@
       subtype: [],
       taxYear: [],
       taxPeriod: [],
-      monthlyYear: '2026', // Toegewyde jaar vir maandelikse tabel
-      yearlyYears: [], // Aparte jaar-keuse vir die jaarlikse tabel
+      monthlyYear: '2026',
+      yearlyYears: [],
       showAverage: true,
       showPercentage: true,
       sort: 'total_desc',
@@ -552,11 +550,13 @@
     function showToast(msg, duration = 3500) {
       const toast = document.getElementById('toast');
       const text = document.getElementById('toast-message');
-      text.textContent = msg;
-      toast.classList.remove('hidden');
-      setTimeout(() => {
-        toast.classList.add('hidden');
-      }, duration);
+      if (toast && text) {
+        text.textContent = msg;
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+          toast.classList.add('hidden');
+        }, duration);
+      }
     }
 
     // Stoor filter keuses in die URL hash sodat die blad oopmaak presies soos dit gelaat is
@@ -578,9 +578,7 @@
           pct: filterState.showPercentage ? 1 : 0,
           srt: filterState.sort,
           bm: filterState.balanceMonths,
-          ba: filterState.balanceAccount,
-          sid: APP_CONFIG.sheetId !== APP_CONFIG.defaultSheetId ? APP_CONFIG.sheetId : undefined,
-          sn: APP_CONFIG.sheetName || undefined
+          ba: filterState.balanceAccount
         };
         const encoded = encodeURIComponent(JSON.stringify(statePayload));
         window.history.replaceState(null, '', '#' + encoded);
@@ -595,34 +593,36 @@
         const hash = window.location.hash.slice(1);
         if (!hash) return;
         const decoded = JSON.parse(decodeURIComponent(hash));
-        if (decoded.c) filterState.category = decoded.c;
-        if (decoded.y) filterState.year = decoded.y;
-        if (decoded.m) filterState.month = decoded.m;
-        if (decoded.a) filterState.account = decoded.a;
-        if (decoded.b) filterState.bank = decoded.b;
-        if (decoded.t) filterState.type = decoded.t;
-        if (decoded.st) filterState.subtype = decoded.st;
-        if (decoded.ty) filterState.taxYear = decoded.ty;
-        if (decoded.tp) filterState.taxPeriod = decoded.tp;
+        if (Array.isArray(decoded.c)) filterState.category = decoded.c;
+        if (Array.isArray(decoded.y)) filterState.year = decoded.y;
+        if (Array.isArray(decoded.m)) filterState.month = decoded.m;
+        if (Array.isArray(decoded.a)) filterState.account = decoded.a;
+        if (Array.isArray(decoded.b)) filterState.bank = decoded.b;
+        if (Array.isArray(decoded.t)) filterState.type = decoded.t;
+        if (Array.isArray(decoded.st)) filterState.subtype = decoded.st;
+        if (Array.isArray(decoded.ty)) filterState.taxYear = decoded.ty;
+        if (Array.isArray(decoded.tp)) filterState.taxPeriod = decoded.tp;
         if (decoded.my) filterState.monthlyYear = decoded.my;
-        if (decoded.yy) filterState.yearlyYears = decoded.yy;
+        if (Array.isArray(decoded.yy)) filterState.yearlyYears = decoded.yy;
         if (decoded.avg !== undefined) filterState.showAverage = decoded.avg === 1;
         if (decoded.pct !== undefined) filterState.showPercentage = decoded.pct === 1;
         if (decoded.srt) filterState.sort = decoded.srt;
         if (decoded.bm) filterState.balanceMonths = decoded.bm;
         if (decoded.ba) filterState.balanceAccount = decoded.ba;
-        if (decoded.sid) APP_CONFIG.sheetId = decoded.sid;
-        if (decoded.sn) APP_CONFIG.sheetName = decoded.sn;
 
-        // Pas kontroles aan by herstel
-        document.getElementById('chk-show-average').checked = filterState.showAverage;
-        document.getElementById('chk-show-percentage').checked = filterState.showPercentage;
-        document.getElementById('select-sort').value = filterState.sort;
-        document.getElementById('balance-bar-month-range').value = filterState.balanceMonths;
-        document.getElementById('balance-line-month-range').value = filterState.balanceMonths;
-        if (document.getElementById('monthly-year-select')) {
-          document.getElementById('monthly-year-select').value = filterState.monthlyYear;
-        }
+        // Pas kontroles aan
+        const chkAvg = document.getElementById('chk-show-average');
+        if (chkAvg) chkAvg.checked = filterState.showAverage;
+        const chkPct = document.getElementById('chk-show-percentage');
+        if (chkPct) chkPct.checked = filterState.showPercentage;
+        const srtSelect = document.getElementById('select-sort');
+        if (srtSelect) srtSelect.value = filterState.sort;
+        const barMonths = document.getElementById('balance-bar-month-range');
+        if (barMonths) barMonths.value = filterState.balanceMonths;
+        const lineMonths = document.getElementById('balance-line-month-range');
+        if (lineMonths) lineMonths.value = filterState.balanceMonths;
+        const moYear = document.getElementById('monthly-year-select');
+        if (moYear) moYear.value = filterState.monthlyYear;
       } catch (err) {
         console.warn('Kon nie URL toestand laai nie:', err);
       }
@@ -862,11 +862,44 @@
       return items;
     }
 
+    function fetchGoogleSheetJSONP(sheetId, sheetName) {
+      return new Promise((resolve, reject) => {
+        const callbackName = 'gvizCallback_' + Math.floor(Math.random() * 1000000);
+        const script = document.createElement('script');
+        let url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${callbackName}`;
+        if (sheetName) url += `&sheet=${encodeURIComponent(sheetName)}`;
+
+        const timeout = setTimeout(() => {
+          cleanup();
+          reject(new Error('Google Sheet versoek het uitgetyd'));
+        }, 6000);
+
+        function cleanup() {
+          clearTimeout(timeout);
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        window[callbackName] = function(resp) {
+          cleanup();
+          resolve(resp);
+        };
+
+        script.onerror = function() {
+          cleanup();
+          reject(new Error('Kon nie script laai nie (moontlik privaat)'));
+        };
+
+        script.src = url;
+        document.head.appendChild(script);
+      });
+    }
+
     async function fetchGoogleSheetData() {
       const spinner = document.getElementById('refresh-spinner');
       if (spinner) spinner.classList.add('animate-spin');
 
-      // Kyk eers of ons reeds data in plaaslike berging het
+      // Kyk eers na localStorage
       try {
         const cached = localStorage.getItem('fin_dashboard_data');
         if (cached && rawTransactions.length === 0) {
@@ -877,63 +910,34 @@
             applyFiltersAndRender();
           }
         }
-      } catch (e) {
-        console.warn('Kon nie kas laai nie:', e);
-      }
+      } catch (e) {}
 
       const sheetId = APP_CONFIG.sheetId.trim();
-      const sheetName = encodeURIComponent(APP_CONFIG.sheetName.trim());
-      
-      // Probeer gviz met limit query
-      let url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&tq=select%20*`;
-      if (sheetName) url += `&sheet=${sheetName}`;
-
+      const sheetName = APP_CONFIG.sheetName.trim();
       let loadedSuccessfully = false;
 
       try {
-        const response = await fetch(url, { cache: 'no-store' });
-        if (response.ok) {
-          const text = await response.text();
-          const jsonMatch = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
-          if (jsonMatch && jsonMatch[1]) {
-            const parsed = JSON.parse(jsonMatch[1]);
-            const parsedData = transformGVizToTransactions(parsed);
-            if (parsedData.length > 0) {
-              rawTransactions = parsedData;
-              loadedSuccessfully = true;
-              try {
-                localStorage.setItem('fin_dashboard_data', JSON.stringify(rawTransactions));
-              } catch (e) {}
-              document.getElementById('total-tx-count').textContent = rawTransactions.length.toLocaleString('af-ZA');
-              document.getElementById('connection-status-banner').classList.add('hidden');
-              showToast(`${rawTransactions.length} transaksies suksesvol vanaf Google Sheet gelaai!`);
-              applyFiltersAndRender();
-            }
+        const resp = await fetchGoogleSheetJSONP(sheetId, sheetName);
+        if (resp && resp.table && resp.table.rows && resp.table.rows.length > 0) {
+          const parsedData = transformGVizToTransactions(resp);
+          if (parsedData.length > 0) {
+            rawTransactions = parsedData;
+            loadedSuccessfully = true;
+            try {
+              localStorage.setItem('fin_dashboard_data', JSON.stringify(rawTransactions));
+            } catch (e) {}
+            document.getElementById('total-tx-count').textContent = rawTransactions.length.toLocaleString('af-ZA');
+            document.getElementById('connection-status-banner').classList.add('hidden');
+            showToast(`${rawTransactions.length} transaksies suksesvol vanaf Google Sheet gelaai!`);
+            applyFiltersAndRender();
           }
         }
       } catch (err) {
-        console.warn('GViz JSON poging het misluk:', err);
+        console.warn('JSONP poging misluk:', err);
       }
 
-      // As GViz misluk, probeer CSV uitvoer
+      // Indien die blad privaat is of misluk, vertoon banner en basislyn
       if (!loadedSuccessfully) {
-        try {
-          const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv${sheetName ? '&sheet=' + sheetName : ''}`;
-          const csvResp = await fetch(csvUrl, { cache: 'no-store' });
-          if (csvResp.ok) {
-            const csvText = await csvResp.text();
-            if (csvText && csvText.length > 50) {
-              parseAndLoadCsv(csvText, true);
-              loadedSuccessfully = true;
-            }
-          }
-        } catch (e) {
-          console.warn('CSV uitvoer poging het misluk:', e);
-        }
-      }
-
-      if (!loadedSuccessfully) {
-        // Wys status banner bo-aan sodat die gebruiker weet waarom dit basislyn wys
         const banner = document.getElementById('connection-status-banner');
         if (banner) banner.classList.remove('hidden');
 
@@ -997,7 +1001,6 @@
       return results;
     }
 
-    // Dropdown panele opstel
     const filterDefinitions = [
       { key: 'category', label: 'Kategorie', prop: 'category' },
       { key: 'year', label: 'Jaar', prop: 'year' },
@@ -1019,7 +1022,6 @@
 
         btn.onclick = (e) => {
           e.stopPropagation();
-          // Maak alle ander panele toe
           document.querySelectorAll('.dropdown-panel').forEach(p => {
             if (p !== panel) p.classList.add('hidden');
           });
@@ -1030,7 +1032,6 @@
         };
       });
 
-      // Maak toe as buite gekliek word
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.dropdown-parent')) {
           document.querySelectorAll('.dropdown-panel').forEach(p => p.classList.add('hidden'));
@@ -1042,22 +1043,18 @@
       const def = filterDefinitions.find(d => d.key === filterKey);
       if (!def) return;
 
-      // Kry alle unieke waardes
       const allVals = Array.from(new Set(rawTransactions.map(t => t[def.prop]))).filter(Boolean).sort();
       const currentSelected = filterState[filterKey];
 
       panel.innerHTML = `
         <div class="space-y-2">
-          <!-- Soekbalk -->
           <div class="relative">
             <input type="text" placeholder="Soek ${def.label.toLowerCase()}..." class="filter-search-input w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-blue-500">
           </div>
-          <!-- Vinnige aksies -->
           <div class="flex items-center justify-between text-[11px] text-blue-400 pb-1 border-b border-slate-800">
             <button class="btn-select-all hover:underline">Kies Alles</button>
             <button class="btn-deselect-all hover:underline text-slate-400">Maak Skoon</button>
           </div>
-          <!-- Lys van opsies -->
           <div class="dropdown-list-items max-h-48 overflow-y-auto space-y-1 pr-1 text-xs">
             ${allVals.map(val => {
               const isChecked = currentSelected.length === 0 || currentSelected.includes(val);
@@ -1079,7 +1076,6 @@
       const listContainer = panel.querySelector('.dropdown-list-items');
       const searchInput = panel.querySelector('.filter-search-input');
 
-      // Soek filter
       searchInput.oninput = (e) => {
         const query = e.target.value.toLowerCase();
         listContainer.querySelectorAll('label').forEach(lbl => {
@@ -1088,7 +1084,6 @@
         });
       };
 
-      // Kies alles
       panel.querySelector('.btn-select-all').onclick = () => {
         filterState[filterKey] = [];
         updateFilterButtonLabels();
@@ -1097,7 +1092,6 @@
         renderDropdownItems(filterKey, panel);
       };
 
-      // Maak skoon
       panel.querySelector('.btn-deselect-all').onclick = () => {
         filterState[filterKey] = ['__NONE__'];
         updateFilterButtonLabels();
@@ -1106,7 +1100,6 @@
         renderDropdownItems(filterKey, panel);
       };
 
-      // Checkbox verandering
       listContainer.querySelectorAll('.item-checkbox').forEach(chk => {
         chk.onchange = () => {
           const checkedCheckboxes = Array.from(listContainer.querySelectorAll('.item-checkbox:checked')).map(c => decodeURIComponent(c.value));
@@ -1128,7 +1121,6 @@
         if (!parent) return;
         const labelSpan = parent.querySelector('.btn-label');
         const selected = filterState[def.key];
-        const allVals = Array.from(new Set(rawTransactions.map(t => t[def.prop]))).filter(Boolean);
 
         if (!selected || selected.length === 0) {
           labelSpan.textContent = `${def.label}: Alles`;
@@ -1193,26 +1185,27 @@
         arrowElem.className = 'text-rose-500 text-sm font-semibold flex items-center';
       }
 
-      // Bar percentages
       const maxVal = Math.max(totalIncome, totalExpenses, 1);
       document.getElementById('kpi-expense-bar').style.width = `${Math.min(100, Math.round((totalExpenses / maxVal) * 100))}%`;
       document.getElementById('kpi-net-bar').style.width = `${Math.min(100, Math.round((Math.max(0, netBalance) / maxVal) * 100))}%`;
     }
 
     function toggleCategoryExpand(catName) {
-      if (expandedCategories.has(catName)) {
-        expandedCategories.delete(catName);
+      const decoded = decodeURIComponent(catName);
+      if (expandedCategories.has(decoded)) {
+        expandedCategories.delete(decoded);
       } else {
-        expandedCategories.add(catName);
+        expandedCategories.add(decoded);
       }
       renderMatrixTable();
     }
 
     function toggleYearlyCategoryExpand(catName) {
-      if (expandedYearlyCategories.has(catName)) {
-        expandedYearlyCategories.delete(catName);
+      const decoded = decodeURIComponent(catName);
+      if (expandedYearlyCategories.has(decoded)) {
+        expandedYearlyCategories.delete(decoded);
       } else {
-        expandedYearlyCategories.add(catName);
+        expandedYearlyCategories.add(decoded);
       }
       renderYearlyMatrixTable();
     }
@@ -1220,8 +1213,8 @@
     function renderMatrixTable() {
       const headRow = document.getElementById('matrix-head-row');
       const tbody = document.getElementById('matrix-body');
+      if (!headRow || !tbody) return;
 
-      // Bepaal unieke maande in chronologiese volgorde
       const monthsMap = new Map();
       rawTransactions.forEach(t => {
         if (!monthsMap.has(t.month)) {
@@ -1233,13 +1226,11 @@
         }
       });
 
-      // Sorteer maande
       let allSortedMonths = Array.from(monthsMap.values()).sort((a, b) => {
         if (a.year !== b.year) return parseInt(a.year) - parseInt(b.year);
         return a.monthIndex - b.monthIndex;
       });
 
-      // Werk die Jaar-kieser dropdown op met alle jare uit die data
       const availableYears = Array.from(new Set(rawTransactions.map(t => String(t.year)))).filter(Boolean).sort().reverse();
       const yearSelect = document.getElementById('monthly-year-select');
       if (yearSelect && availableYears.length > 0) {
@@ -1247,19 +1238,16 @@
         yearSelect.innerHTML = availableYears.map(y => `<option value="${y}" ${y === curSelected ? 'selected' : ''}>${y}</option>`).join('') + `<option value="ALL" ${curSelected === 'ALL' ? 'selected' : ''}>Alle Jare</option>`;
       }
 
-      // Filtreer maande volgens die gekose jaar vir hierdie tabel
       let displayMonths = allSortedMonths;
       if (filterState.monthlyYear && filterState.monthlyYear !== 'ALL') {
         displayMonths = displayMonths.filter(m => m.year === filterState.monthlyYear);
       }
 
-      // As die gebruiker ook die Maand-filter gebruik het
       let sortedMonths = displayMonths.map(m => m.label);
       if (filterState.month.length > 0 && !filterState.month.includes('__NONE__')) {
         sortedMonths = sortedMonths.filter(m => filterState.month.includes(m));
       }
 
-      // Bou tabel headers
       let headHTML = `<th class="py-3 px-4 sticky left-0 z-20 bg-slate-800 min-w-[210px] border-r border-slate-700">Kategorie (Kliek vir Sub-tipes)</th>`;
       sortedMonths.forEach(m => {
         headHTML += `<th class="py-3 px-3 text-right whitespace-nowrap">${m}</th>`;
@@ -1274,7 +1262,6 @@
       }
       headRow.innerHTML = headHTML;
 
-      // Groepeer data volgens Inkomste en Uitgawes, asook Sub-tipes
       const incomeMap = {};
       const expenseMap = {};
       const monthlyTotalIncome = {};
@@ -1310,7 +1297,6 @@
         }
       });
 
-      // Sorteer kategorieë binne hul groepe
       function sortCategories(catMap) {
         const entries = Object.entries(catMap);
         switch (filterState.sort) {
@@ -1335,7 +1321,7 @@
 
       let bodyHTML = '';
 
-      // --- SEKSIE 1: INKOMSTE BANNER ---
+      // INKOMSTE BANNER
       bodyHTML += `
         <tr class="bg-blue-950/40 text-blue-300 font-semibold border-t border-b border-blue-900/60">
           <td colspan="${sortedMonths.length + 1 + (filterState.showAverage ? 1 : 0) + (filterState.showPercentage ? 1 : 0)}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
@@ -1368,7 +1354,6 @@
           </tr>
         `;
 
-        // Oopgevoude Sub-tipe rye
         if (isExpanded) {
           const sortedSubs = Object.entries(data.subtypes).sort((a, b) => b[1].total - a[1].total);
           sortedSubs.forEach(([subName, sData]) => {
@@ -1405,7 +1390,7 @@
         </tr>
       `;
 
-      // --- SEKSIE 2: UITGAWES BANNER ---
+      // UITGAWES BANNER
       bodyHTML += `
         <tr class="bg-rose-950/40 text-rose-300 font-semibold border-t border-b border-rose-900/60">
           <td colspan="${sortedMonths.length + 1 + (filterState.showAverage ? 1 : 0) + (filterState.showPercentage ? 1 : 0)}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
@@ -1438,7 +1423,6 @@
           </tr>
         `;
 
-        // Oopgevoude Sub-tipe rye vir Uitgawes (bv. Vakansie, Kos ens.)
         if (isExpanded) {
           const sortedSubs = Object.entries(data.subtypes).sort((a, b) => b[1].total - a[1].total);
           sortedSubs.forEach(([subName, sData]) => {
@@ -1475,7 +1459,7 @@
         </tr>
       `;
 
-      // --- NETTO RY (Inkomste – Uitgawes) ---
+      // NETTO RY
       const grandNet = grandTotalIncome - grandTotalExpense;
       const avgNet = grandNet / monthCount;
       bodyHTML += `
@@ -1500,6 +1484,7 @@
       const tbody = document.getElementById('yearly-matrix-body');
       const warningBox = document.getElementById('overlap-warning-box');
       const warningList = document.getElementById('overlap-warning-list');
+      if (!headRow || !tbody) return;
 
       const allYears = Array.from(new Set(rawTransactions.map(t => String(t.year)))).filter(Boolean).sort();
       let activeYears = allYears;
@@ -1528,7 +1513,7 @@
       });
 
       const overlaps = Array.from(incomeCatSet).filter(cat => expenseCatSet.has(cat));
-      if (overlaps.length > 0) {
+      if (overlaps.length > 0 && warningBox && warningList) {
         warningBox.classList.remove('hidden');
         warningList.innerHTML = overlaps.map(cat => {
           const matching = yearlyFilteredTransactions.filter(t => t.category === cat && t.section === 'Uitgawes');
@@ -1536,7 +1521,7 @@
           const sampleId = matching[0]?.id || '7803';
           return `<li><span class="font-semibold">${cat}</span>: ${count} transaksies verskyn onder Uitgawes (Sheet rye: ${sampleId})</li>`;
         }).join('');
-      } else {
+      } else if (warningBox) {
         warningBox.classList.add('hidden');
       }
 
@@ -1593,7 +1578,7 @@
 
       let bodyHTML = '';
 
-      // --- INKOMSTE BANNER ---
+      // INKOMSTE BANNER
       bodyHTML += `
         <tr class="bg-blue-950/40 text-blue-300 font-semibold border-t border-b border-blue-900/60">
           <td colspan="${activeYears.length + 4}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
@@ -1662,7 +1647,7 @@
         </tr>
       `;
 
-      // --- UITGAWES BANNER ---
+      // UITGAWES BANNER
       bodyHTML += `
         <tr class="bg-rose-950/40 text-rose-300 font-semibold border-t border-b border-rose-900/60">
           <td colspan="${activeYears.length + 4}" class="py-2.5 px-4 sticky left-0 z-10 flex items-center gap-2">
@@ -1731,7 +1716,7 @@
         </tr>
       `;
 
-      // --- NETTO RY ---
+      // NETTO RY
       const grandNet = grandTotalIncome - grandTotalExpense;
       const avgNet = grandNet / yearCount;
       bodyHTML += `
@@ -1752,6 +1737,241 @@
       updateYearlyFilterPanel(allYears);
     }
 
+    function updateYearlyFilterPanel(allYears) {
+      const panel = document.getElementById('yearly-filter-panel');
+      const label = document.getElementById('yearly-filter-label');
+      const btn = document.getElementById('yearly-filter-btn');
+      if (!panel || !label || !btn) return;
+
+      const selected = filterState.yearlyYears;
+      if (!selected || selected.length === 0) {
+        label.textContent = 'Jaar: Alles';
+      } else if (selected.includes('__NONE__')) {
+        label.textContent = 'Jaar: 0 gekies';
+      } else {
+        label.textContent = `Jaar: ${selected.length} gekies`;
+      }
+
+      panel.innerHTML = `
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-[11px] text-blue-400 pb-1 border-b border-slate-800">
+            <button id="yearly-select-all" class="hover:underline">Kies Alles</button>
+            <button id="yearly-deselect-all" class="hover:underline text-slate-400">Maak Skoon</button>
+          </div>
+          <div class="max-h-48 overflow-y-auto space-y-1 text-xs">
+            ${allYears.map(y => {
+              const isChecked = selected.length === 0 || selected.includes(y);
+              return `
+                <label class="flex items-center gap-2 p-1 rounded hover:bg-slate-800/80 cursor-pointer text-slate-200">
+                  <input type="checkbox" value="${y}" ${isChecked ? 'checked' : ''} class="yearly-item-checkbox rounded text-blue-600 bg-slate-800 border-slate-700">
+                  <span>${y}</span>
+                </label>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        panel.classList.toggle('hidden');
+      };
+
+      const selectAllBtn = panel.querySelector('#yearly-select-all');
+      if (selectAllBtn) {
+        selectAllBtn.onclick = () => {
+          filterState.yearlyYears = [];
+          saveStateToUrl();
+          renderYearlyMatrixTable();
+        };
+      }
+
+      const deselectAllBtn = panel.querySelector('#yearly-deselect-all');
+      if (deselectAllBtn) {
+        deselectAllBtn.onclick = () => {
+          filterState.yearlyYears = ['__NONE__'];
+          saveStateToUrl();
+          renderYearlyMatrixTable();
+        };
+      }
+
+      panel.querySelectorAll('.yearly-item-checkbox').forEach(chk => {
+        chk.onchange = () => {
+          const checked = Array.from(panel.querySelectorAll('.yearly-item-checkbox:checked')).map(c => c.value);
+          if (checked.length === allYears.length || checked.length === 0) {
+            filterState.yearlyYears = [];
+          } else {
+            filterState.yearlyYears = checked;
+          }
+          saveStateToUrl();
+          renderYearlyMatrixTable();
+        };
+      });
+    }
+
+    function renderAccountBalanceCharts() {
+      const barCanvas = document.getElementById('chart-balance-bars');
+      const lineCanvas = document.getElementById('chart-total-balance-line');
+      if (!barCanvas || !lineCanvas) return;
+
+      // Bou lys van rekeninge
+      const accounts = Array.from(new Set(rawTransactions.map(t => t.account))).filter(Boolean).sort();
+      const barAccSelect = document.getElementById('balance-bar-account-select');
+      const lineAccSelect = document.getElementById('balance-line-account-select');
+
+      if (barAccSelect && barAccSelect.options.length <= 1) {
+        accounts.forEach(acc => {
+          const opt1 = new Option(acc, acc);
+          const opt2 = new Option(acc, acc);
+          barAccSelect.add(opt1);
+          lineAccSelect.add(opt2);
+        });
+        barAccSelect.value = filterState.balanceAccount;
+        lineAccSelect.value = filterState.balanceAccount;
+      }
+
+      // Versamel chronologiese maande met hul laaste sluitingsaldo
+      const monthsMap = new Map();
+      rawTransactions.forEach(t => {
+        if (!monthsMap.has(t.month)) {
+          monthsMap.set(t.month, {
+            label: t.month,
+            year: parseInt(t.year) || 2026,
+            monthIndex: t.monthIndex || 1
+          });
+        }
+      });
+
+      let allMonths = Array.from(monthsMap.values()).sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year;
+        return a.monthIndex - b.monthIndex;
+      });
+
+      // Beperk volgens aantal maande gekies
+      if (filterState.balanceMonths !== 'ALL') {
+        const count = parseInt(filterState.balanceMonths) || 12;
+        allMonths = allMonths.slice(-count);
+      }
+
+      const labels = allMonths.map(m => m.label);
+
+      // Bereken maandelikse saldo
+      const balances = labels.map(mLabel => {
+        let matching = rawTransactions.filter(t => t.month === mLabel);
+        if (filterState.balanceAccount !== 'ALL') {
+          matching = matching.filter(t => t.account === filterState.balanceAccount);
+        }
+        if (matching.length === 0) return 11990000;
+        return matching[matching.length - 1].balance || 11990000;
+      });
+
+      // 1. Staafgrafiek (Saldo per rekening)
+      if (barChartInstance) barChartInstance.destroy();
+      const ctxBar = barCanvas.getContext('2d');
+      barChartInstance = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: balances,
+            backgroundColor: '#3b82f6',
+            borderRadius: 4,
+            barThickness: 14,
+            maxBarThickness: 18
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` Saldo: ${formatCurrency(ctx.parsed.y)}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#94a3b8', font: { size: 11 } }
+            },
+            y: {
+              display: false,
+              grid: { display: false }
+            }
+          }
+        }
+      });
+
+      // 2. Areagrafiek / Tendenslyn (Totale saldo)
+      if (lineChartInstance) lineChartInstance.destroy();
+      const ctxLine = lineCanvas.getContext('2d');
+      const gradient = ctxLine.createLinearGradient(0, 0, 0, 240);
+      gradient.addColorStop(0, 'rgba(59, 130, 246, 0.45)');
+      gradient.addColorStop(1, 'rgba(59, 130, 246, 0.02)');
+
+      const latestBalance = balances[balances.length - 1] || 11990629;
+
+      lineChartInstance = new Chart(ctxLine, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: balances,
+            borderColor: '#3b82f6',
+            borderWidth: 2.5,
+            fill: true,
+            backgroundColor: gradient,
+            tension: 0.35,
+            pointBackgroundColor: '#60a5fa',
+            pointBorderColor: '#1e3a8a',
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` Totale Saldo: ${formatCurrency(ctx.parsed.y)}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: { color: '#94a3b8', font: { size: 11 } }
+            },
+            y: {
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: {
+                color: '#94a3b8',
+                font: { size: 11 },
+                callback: (val) => formatCurrency(val)
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function applyFiltersAndRender() {
+      try {
+        applyFilters();
+        renderSummaryKPIs();
+        renderMatrixTable();
+        renderYearlyMatrixTable();
+        renderAccountBalanceCharts();
+        updateFilterButtonLabels();
+      } catch (err) {
+        console.error('Fout tydens vertoon van data:', err);
+      }
+    }
+
     function setupEventListeners() {
       // Herstel Filters Knoppie
       document.getElementById('btn-reset-filters').onclick = () => {
@@ -1759,7 +1979,7 @@
         filterState.yearlyYears = [];
         expandedCategories.clear();
         expandedYearlyCategories.clear();
-        saveStateToUrl();
+        window.history.replaceState(null, '', window.location.pathname);
         applyFiltersAndRender();
         showToast('Alle filters is herstel.');
       };
@@ -1810,7 +2030,7 @@
         renderAccountBalanceCharts();
       };
 
-      // Balans maand bestek (Staafgrafiek & Lyn)
+      // Balans maand bestek
       document.getElementById('balance-bar-month-range').onchange = (e) => {
         filterState.balanceMonths = e.target.value;
         document.getElementById('balance-line-month-range').value = e.target.value;
@@ -1898,7 +2118,6 @@
 
       const items = [];
       for (let i = 1; i < lines.length; i++) {
-        // Hanteer kommas binne aanhalingstekens korrek
         const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
         const dStr = cols[headers.findIndex(h => h.includes('dat')) !== -1 ? headers.findIndex(h => h.includes('dat')) : 0] || '2026-01-01';
         const cat = cols[headers.findIndex(h => h.includes('kat') || h.includes('cat')) !== -1 ? headers.findIndex(h => h.includes('kat') || h.includes('cat')) : 1] || 'Ander';
@@ -1946,7 +2165,6 @@
       }
     }
 
-    // Inisialisering sodra die bladsy klaar gelaai is
     window.addEventListener('DOMContentLoaded', () => {
       loadStateFromUrl();
       setupDropdownPanels();
