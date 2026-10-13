@@ -1206,8 +1206,8 @@
         }
       }
 
-      const sortedIncomeCats = sortCategories(incomeMap);
-      const sortedExpenseCats = sortCategories(expenseMap);
+      const sortedIncomeCats = sortCategories(incomeMap).filter(([_, data]) => Math.abs(data.total) > 0.001);
+      const sortedExpenseCats = sortCategories(expenseMap).filter(([_, data]) => Math.abs(data.total) > 0.001);
 
       const grandTotalIncome = Object.values(monthlyTotalIncome).reduce((a, b) => a + b, 0);
       const grandTotalExpense = Object.values(monthlyTotalExpense).reduce((a, b) => a + b, 0);
@@ -1247,7 +1247,9 @@
         `;
 
         if (isExpanded) {
-          const sortedSubs = Object.entries(data.subItems).sort((a, b) => b[1].total - a[1].total);
+          const sortedSubs = Object.entries(data.subItems)
+            .filter(([_, sData]) => Math.abs(sData.total) > 0.001)
+            .sort((a, b) => b[1].total - a[1].total);
           sortedSubs.forEach(([subName, sData]) => {
             const sAvg = sData.total / monthCount;
             const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
@@ -1314,7 +1316,9 @@
         `;
 
         if (isExpanded) {
-          const sortedSubs = Object.entries(data.subItems).sort((a, b) => b[1].total - a[1].total);
+          const sortedSubs = Object.entries(data.subItems)
+            .filter(([_, sData]) => Math.abs(sData.total) > 0.001)
+            .sort((a, b) => b[1].total - a[1].total);
           sortedSubs.forEach(([subName, sData]) => {
             const sAvg = sData.total / monthCount;
             const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
@@ -1446,8 +1450,12 @@
       const grandTotalExpense = Object.values(yearlyTotalExpense).reduce((a, b) => a + b, 0);
       const yearCount = activeYears.length || 1;
 
-      const sortedIncomeCats = Object.entries(incomeMap).sort((a, b) => b[1].total - a[1].total);
-      const sortedExpenseCats = Object.entries(expenseMap).sort((a, b) => b[1].total - a[1].total);
+      const sortedIncomeCats = Object.entries(incomeMap)
+        .filter(([_, data]) => Math.abs(data.total) > 0.001)
+        .sort((a, b) => b[1].total - a[1].total);
+      const sortedExpenseCats = Object.entries(expenseMap)
+        .filter(([_, data]) => Math.abs(data.total) > 0.001)
+        .sort((a, b) => b[1].total - a[1].total);
 
       const colSpanCount = activeYears.length + 2 + (filterState.showAverage ? 1 : 0) + (filterState.showPercentage ? 1 : 0);
 
@@ -1552,22 +1560,24 @@
         `;
 
         if (isExpanded) {
-          const sortedSubs = Object.entries(data.subItems).sort((a, b) => b[1].total - a[1].total);
+          const sortedSubs = Object.entries(data.subItems)
+            .filter(([_, sData]) => Math.abs(sData.total) > 0.001)
+            .sort((a, b) => b[1].total - a[1].total);
           sortedSubs.forEach(([subName, sData]) => {
             const sAvg = sData.total / yearCount;
             const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
             bodyHTML += `
-              <tr class="bg-rose-950/15 hover:bg-rose-950/25 text-slate-300 text-xs border-b border-slate-800/30">
-                <td class="py-2 pl-9 pr-4 sticky left-0 bg-[#160c12] border-r border-slate-800 text-slate-300 flex items-center gap-2">
-                  <span class="w-1.5 h-1.5 rounded-full bg-rose-400/80"></span>
+              <tr class="bg-blue-950/15 hover:bg-blue-950/25 text-slate-300 text-xs border-b border-slate-800/30">
+                <td class="py-2 pl-9 pr-4 sticky left-0 bg-[#0a101d] border-r border-slate-800 text-slate-300 flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-blue-400/80"></span>
                   <span class="truncate" title="${subName}">${subName}</span>
                 </td>
                 ${activeYears.map(y => {
                   const val = sData.byYear[y] || 0;
-                  return `<td class="py-2 px-3 text-right ${val > 0 ? 'text-slate-300' : 'text-slate-700'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
+                  return `<td class="py-2 px-3 text-right ${val > 0 ? 'text-emerald-300/90' : 'text-slate-700'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
                 }).join('')}
-                <td class="py-2 px-3 text-right font-medium text-rose-300/90 bg-slate-800/20">${formatCurrency(sData.total)}</td>
-                ${filterState.showAverage ? `<td class="py-2 px-3 text-right text-slate-400 col-average bg-slate-800/20">${formatCurrency(sAvg)}</td>` : ''}
+                <td class="py-2 px-3 text-right font-medium text-emerald-400/90 bg-slate-800/20">${formatCurrency(sData.total)}</td>
+                ${filterState.showAverage ? `<td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${formatCurrency(sAvg)}</td>` : ''}
                 ${filterState.showPercentage ? `<td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${sPct}</td>` : ''}
               </tr>
             `;
@@ -1678,28 +1688,28 @@
     function renderAccountBalanceCharts() {
       const barCanvas = document.getElementById('chart-balance-bars');
       const lineCanvas = document.getElementById('chart-total-balance-line');
-      if (!barCanvas || !lineCanvas) return;
-
-      const accounts = Array.from(new Set(rawTransactions.map(t => t.account))).filter(Boolean).sort();
-      const barAccSelect = document.getElementById('balance-bar-account-select');
-      const lineAccSelect = document.getElementById('balance-line-account-select');
-
-      if (barAccSelect && barAccSelect.options.length <= 1) {
-        accounts.forEach(acc => {
-          barAccSelect.add(new Option(acc, acc));
-          lineAccSelect.add(new Option(acc, acc));
-        });
-        barAccSelect.value = filterState.balanceAccount;
-        lineAccSelect.value = filterState.balanceAccount;
-      }
-
-      const monthsMap = new Map();
-      rawTransactions.forEach(t => {
-        if (!monthsMap.has(t.month)) {
-          monthsMap.set(t.month, {
-            label: t.month,
-            year: parseInt(t.year) || 2026,
-            monthIndex: t.monthIndex || 1
+        if (isExpanded) {
+          const sortedSubs = Object.entries(data.subItems)
+            .filter(([_, sData]) => Math.abs(sData.total) > 0.001)
+            .sort((a, b) => b[1].total - a[1].total);
+          sortedSubs.forEach(([subName, sData]) => {
+            const sAvg = sData.total / yearCount;
+            const sPct = data.total > 0 ? ((sData.total / data.total) * 100).toFixed(1) + '%' : '0.0%';
+            bodyHTML += `
+              <tr class="bg-rose-950/15 hover:bg-rose-950/25 text-slate-300 text-xs border-b border-slate-800/30">
+                <td class="py-2 pl-9 pr-4 sticky left-0 bg-[#160c12] border-r border-slate-800 text-slate-300 flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-400/80"></span>
+                  <span class="truncate" title="${subName}">${subName}</span>
+                </td>
+                ${activeYears.map(y => {
+                  const val = sData.byYear[y] || 0;
+                  return `<td class="py-2 px-3 text-right ${val > 0 ? 'text-slate-300' : 'text-slate-700'}">${val > 0 ? formatCurrency(val) : '—'}</td>`;
+                }).join('')}
+                <td class="py-2 px-3 text-right font-medium text-rose-300/90 bg-slate-800/20">${formatCurrency(sData.total)}</td>
+                ${filterState.showAverage ? `<td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${formatCurrency(sAvg)}</td>` : ''}
+                ${filterState.showPercentage ? `<td class="py-2 px-3 text-right text-slate-400 bg-slate-800/20">${sPct}</td>` : ''}
+              </tr>
+            `;
           });
         }
       });
