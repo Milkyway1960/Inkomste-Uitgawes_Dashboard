@@ -205,9 +205,14 @@
     font-weight: 700; color: var(--text-primary); border-top: 2px solid var(--baseline);
     background: color-mix(in srgb, var(--text-primary) 10%, var(--surface-1));
   }
-  td.amt-pos { color: var(--good); }
-  td.amt-neg { color: var(--critical); }
-  td.amt-zero { color: var(--text-muted); }
+  /* Inkomste altyd groen, Uitgawes altyd rooi, Netto groen/rooi volgens teken */
+  .amt-income, .amt-pos { color: var(--good) !important; }
+  .amt-expense, .amt-neg { color: var(--critical) !important; }
+  .amt-zero { color: var(--text-muted); }
+  /* Naam van die Google Sheet langsaan die titel — helder geel, dieselfde skrif */
+  .sheet-title { color: #ffe600; font: inherit; margin-left: 18px; }
+  :root[data-theme="light"] .sheet-title { color: #b38f00; }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .sheet-title { color: #b38f00; } }
 
   /* Balance charts */
   .balance-chart { display: flex; align-items: flex-end; gap: 10px; height: 200px; border-bottom: 1px solid var(--baseline); overflow-x: auto; padding-bottom: 0; }
@@ -239,7 +244,7 @@
 
 <header>
   <div>
-    <h1>Inkomste &amp; Uitgawe Dashboard</h1>
+    <h1>Inkomste &amp; Uitgawe Dashboard<span class="sheet-title" id="sheetTitle"></span></h1>
     <div class="sub" id="signedInAs">Nie aangemeld nie</div>
   </div>
   <div class="row">
@@ -468,8 +473,23 @@
     els.signInBtn.classList.remove("hidden");
     els.signOutBtn.classList.add("hidden");
     els.signedInAs.textContent = "Nie aangemeld nie";
+    var st = document.getElementById("sheetTitle"); if (st) st.textContent = "";
     setStatus("Meld aan met Google om jou data te laai.");
   });
+
+  // ---------- Sheet title (naam van die Google Sheet langsaan die opskrif) ----------
+  function showSheetTitle() {
+    var el = document.getElementById("sheetTitle");
+    if (!el) return;
+    el.textContent = settings.sheetName ? "· " + settings.sheetName : "";
+    var url = "https://sheets.googleapis.com/v4/spreadsheets/" + encodeURIComponent(settings.sheetId) + "?fields=properties.title";
+    fetch(url, { headers: { Authorization: "Bearer " + accessToken } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (j && j.properties && j.properties.title) el.textContent = j.properties.title;
+      })
+      .catch(function () {});
+  }
 
   // ---------- Data loading ----------
   function loadData() {
@@ -493,6 +513,7 @@
         }
         allRows = parseRows(values);
         els.signedInAs.textContent = "Aangemeld — " + allRows.length + " transaksies gelaai";
+        showSheetTitle();
         initFilters(); // fresh defaults every time data is (re)loaded — nothing here is remembered
         render();
       })
@@ -716,9 +737,11 @@
   var fmtCurrency = new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR", maximumFractionDigits: 0 });
   var MONTH_LABEL = ["Jan","Feb","Mrt","Apr","Mei","Jun","Jul","Aug","Sep","Okt","Nov","Des"];
 
+  // amtMode: "income" = altyd groen, "expense" = altyd rooi, "" = groen/rooi volgens teken (Netto)
+  var amtMode = "";
   function fmtAmt(n) {
     if (!n) return '<span class="amt-zero">—</span>';
-    var cls = n > 0 ? "amt-pos" : (n < 0 ? "amt-neg" : "amt-zero");
+    var cls = amtMode === "income" ? "amt-income" : amtMode === "expense" ? "amt-expense" : (n > 0 ? "amt-pos" : (n < 0 ? "amt-neg" : "amt-zero"));
     return '<span class="' + cls + '">' + fmtCurrency.format(n) + "</span>";
   }
 
@@ -835,9 +858,9 @@
 
     // Tiles
     html += '<div class="tiles">';
-    html += tile("Totale inkomste", fmtCurrency.format(totalIncome), "good", "▲");
-    html += tile("Totale uitgawes", fmtCurrency.format(totalExpense), "bad", "▼");
-    html += tile("Netto saldo", fmtCurrency.format(net), net >= 0 ? "good" : "bad", net >= 0 ? "▲" : "▼", net < 0);
+    html += tile("Totale inkomste", fmtCurrency.format(totalIncome), "good", "▲", false, "amt-income");
+    html += tile("Totale uitgawes", fmtCurrency.format(totalExpense), "bad", "▼", false, "amt-expense");
+    html += tile("Netto saldo", fmtCurrency.format(net), net >= 0 ? "good" : "bad", net >= 0 ? "▲" : "▼", net < 0, net >= 0 ? "amt-pos" : "amt-neg");
     html += "</div>";
 
     // Matrix table (per maand)
@@ -1137,6 +1160,10 @@
   }
 
   function matrixSection(label, cls, grouped, cols, sectionTotal) {
+    amtMode = cls === "income" ? "income" : cls === "expense" ? "expense" : "";
+    try { return matrixSectionInner(label, cls, grouped, cols, sectionTotal); } finally { amtMode = ""; }
+  }
+  function matrixSectionInner(label, cls, grouped, cols, sectionTotal) {
     var colspan = cols.length + 1 + (showAvgCol ? 1 : 0) + (showPctCol ? 1 : 0);
     var html = '<tr class="section-row ' + cls + '"><td class="row-label-col" colspan="' + colspan + '">' + escapeHtml(label) + '</td></tr>';
 
@@ -1196,6 +1223,10 @@
   }
 
   function matrixTotalRow(label, sums, cols, extraCls, sectionTotal) {
+    amtMode = extraCls === "income-total" ? "income" : extraCls === "expense-total" ? "expense" : "";
+    try { return matrixTotalRowInner(label, sums, cols, extraCls, sectionTotal); } finally { amtMode = ""; }
+  }
+  function matrixTotalRowInner(label, sums, cols, extraCls, sectionTotal) {
     var total = rowTotalOf(sums, cols);
     var html = '<tr class="subtotal-row' + (extraCls ? " " + extraCls : "") + '"><td class="row-label-col">' + escapeHtml(label) + '</td>';
     cols.forEach(function (c) { html += '<td>' + fmtAmt(sums[c.key] || 0) + '</td>'; });
@@ -1280,8 +1311,8 @@
     return html;
   }
 
-  function tile(label, value, cls, arrow, isNeg) {
-    return '<div class="tile"><div class="label">' + label + '</div><div class="value' + (isNeg ? " neg" : "") + '">' + value + '</div>' +
+  function tile(label, value, cls, arrow, isNeg, valueCls) {
+    return '<div class="tile"><div class="label">' + label + '</div><div class="value' + (isNeg ? " neg" : "") + (valueCls ? " " + valueCls : "") + '">' + value + '</div>' +
       '<div class="delta ' + (cls === "good" ? "good" : "bad") + '">' + arrow + '</div></div>';
   }
 
