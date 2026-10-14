@@ -240,6 +240,34 @@
     .tiles { grid-template-columns: 1fr; }
     .settings-grid { grid-template-columns: 1fr; }
   }
+
+  /* ===== Groter skrif en volle skermwydte (v5) ===== */
+  body { padding: 24px 32px; max-width: 2400px; }
+  h1 { font-size: 30px; }
+  .sub { font-size: 16px; }
+  .btn { font-size: 16px; padding: 10px 18px; }
+  .btn.small { font-size: 15px; padding: 7px 14px; }
+  label { font-size: 15px; }
+  input[type=text], input[type=password], select { font-size: 16px; padding: 10px 12px; }
+  .hint { font-size: 14px; }
+  .tile { padding: 18px 22px; }
+  .tile .label { font-size: 16px; }
+  .tile .value { font-size: 38px; }
+  .tile .delta { font-size: 16px; }
+  details.filter-dd summary { font-size: 16px; padding: 10px 14px; }
+  .filter-panel-actions button { font-size: 14px; padding: 5px 10px; }
+  .filter-option { font-size: 15px; padding: 3px 5px; }
+  details.filter-dd .filter-panel { min-width: 260px; max-width: 380px; }
+  .extra-col-toggle { font-size: 16px; padding: 10px 14px; }
+  .extra-col-toggle select { font-size: 16px; }
+  table.matrix-table { font-size: 16px; }
+  table.matrix-table th, table.matrix-table td { padding: 9px 14px; }
+  table.matrix-table th.row-label-col, table.matrix-table td.row-label-col { max-width: 360px; }
+  .chart-title { font-size: 20px !important; }
+  .balance-month-label { font-size: 13px; }
+  .line-chart-svg text { font-size: 13px; }
+  .status-msg { font-size: 16px; }
+  footer { font-size: 14px; }
 </style>
 </head>
 <body>
@@ -853,7 +881,7 @@
     html += '<label class="extra-col-toggle"><input type="checkbox" id="showAvgColToggle"' + (showAvgCol ? " checked" : "") + '> Wys Gemiddeld</label>';
     html += '<label class="extra-col-toggle"><input type="checkbox" id="showPctColToggle"' + (showPctCol ? " checked" : "") + '> Wys %</label>';
     html += '<label class="extra-col-toggle">Sorteer Kategorie: <select id="catSortModeSelect">' +
-      '<option value="total"' + (catSortMode === "total" ? " selected" : "") + '>Volgens Totaal (klein → groot)</option>' +
+      '<option value="total"' + (catSortMode === "total" ? " selected" : "") + '>Volgens Totaal (groot → klein)</option>' +
       '<option value="alpha"' + (catSortMode === "alpha" ? " selected" : "") + '>Alfabeties (A → Z)</option>' +
       '</select></label>';
     html += '</div>';
@@ -1166,7 +1194,7 @@
     try { return matrixSectionInner(label, cls, grouped, cols, sectionTotal); } finally { amtMode = ""; }
   }
   function matrixSectionInner(label, cls, grouped, cols, sectionTotal) {
-    var colspan = cols.length + 1 + (showAvgCol ? 1 : 0) + (showPctCol ? 1 : 0);
+    var colspan = cols.length + 2 + (showAvgCol ? 1 : 0) + (showPctCol ? 1 : 0);
     var html = '<tr class="section-row ' + cls + '"><td class="row-label-col" colspan="' + colspan + '">' + escapeHtml(label) + '</td></tr>';
 
     var items = [];
